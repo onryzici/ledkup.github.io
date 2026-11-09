@@ -9,6 +9,6 @@
 - Canlı akım/güç tahmini, PWM bit ve parlaklık ayarı
 - Malzeme listesi, bağlantı şeması, ffmpeg ve `rpi-rgb-led-matrix` komutları
 
-Donanım: 5× P2.5 64×64 HUB75E panel, tek zincir (320×64), Pi Zero 2 W, 5 V 20 A PSU. Yaklaşık 119 $.
+Donanım (Türkiye): 10× P5 iç mekan 320×160 modül (64×32, HUB75), iki modül bir yüz, U-mapper ile tek zincir (320×64), Pi Zero 2 W + 74HCT245 adaptör, 5 V 40 A. Yaklaşık 14.400 TL.
 
 Tek dosya: `index.html` (three.js 0.160, CDN'den). Yerelde açmak için bir statik sunucu yeterli, örn. `npx serve .`

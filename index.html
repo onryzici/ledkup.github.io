@@ -159,9 +159,9 @@ tfoot td{font-weight:600;border-bottom:0}
   <header class="top">
     <div style="display:flex;flex-direction:column;gap:6px">
       <h1>LED Küp Simülatörü</h1>
-      <p class="muted" style="max-width:62ch">İç yüzeyleri LED panel olan, önü açık bir küp. Simülasyon, gerçek sistemde Pi'nin panellere gönderdiği kareyi üretip panellere dağıtır; gördüğün şey donanımın göstereceğiyle aynıdır.</p>
+      <p class="muted" style="max-width:62ch">İç yüzeyleri LED panel olan, önü açık bir küp. Bütün parçalar Türkiye'de satılıyor. Simülasyon, gerçek sistemde Pi'nin modüllere gönderdiği kareyi üretip yüzlere dağıtır; gördüğün şey donanımın göstereceğiyle aynıdır.</p>
     </div>
-    <div class="spec"><span><b>5×</b> HUB75 64×64</span><span><b>20 480</b> RGB LED</span><span><b>160</b> mm iç ölçü</span><span>Pi Zero 2 W</span><span>5 V 20 A</span><span><b>≈ 120 $</b></span></div>
+    <div class="spec"><span><b>10×</b> P5 320×160 modül</span><span><b>20 480</b> RGB LED</span><span><b>320</b> mm iç ölçü</span><span>Pi Zero 2 W</span><span>5 V 40 A</span><span><b>≈ 14.400 TL</b></span></div>
   </header>
 
   <section class="stage">
@@ -236,7 +236,7 @@ tfoot td{font-weight:600;border-bottom:0}
         <h3>Canlı güç ölçümü</h3>
         <div class="big"><b id="mA">–</b><span>A · 5 V</span><span id="mW" style="margin-left:auto">– W</span></div>
         <div class="bar" id="psuBar"><div></div></div>
-        <p class="muted" style="font-size:12.5px" id="psuTxt">20 A güç kaynağının –%'i kullanılıyor</p>
+        <p class="muted" style="font-size:12.5px" id="psuTxt">40 A güç kaynağının –%'i kullanılıyor</p>
         <div class="pbars" id="pbars"></div>
       </div>
     </aside>
@@ -244,7 +244,7 @@ tfoot td{font-weight:600;border-bottom:0}
 
   <section class="block">
     <h2>Zincire giden kare</h2>
-    <p class="lead">Pi beş paneli tek bir 320×64 piksellik ekran olarak görür. Şeritteki her 64 piksellik dilim, veri zincirinde sırası gelen panele gider. Gerçek sistemde Pi'ye tam olarak bu şerit verilir (aşağıdaki ffmpeg komutu videonu buna çevirir).</p>
+    <p class="lead">Pi on modülü U-mapper ayarıyla tek bir 320×64 piksellik ekran olarak görür. Şeritteki her 64 piksellik dilim bir yüzdür: üst yarısı o yüzün üst modülüne, alt yarısı alt modülüne gider. Gerçek sistemde Pi'ye tam olarak bu şerit verilir (aşağıdaki ffmpeg komutu videonu buna çevirir).</p>
     <div class="strip-wrap">
       <canvas id="strip" width="320" height="64"></canvas>
       <div class="slots"><span><b>1</b> Arka</span><span><b>2</b> Sol</span><span><b>3</b> Tavan</span><span><b>4</b> Sağ</span><span><b>5</b> Zemin</span></div>
@@ -262,20 +262,22 @@ tfoot td{font-weight:600;border-bottom:0}
           <text class="w-s" x="64" y="75" text-anchor="middle">sigorta + anahtar</text>
           <path class="w-ac" d="M112 60 H150"/>
           <rect class="w-box" x="150" y="24" width="170" height="72" rx="6"/>
-          <text class="w-t" x="235" y="54" text-anchor="middle">5 V 20 A güç kaynağı</text>
-          <text class="w-s" x="235" y="72" text-anchor="middle">100 W · kaidede</text>
+          <text class="w-t" x="235" y="54" text-anchor="middle">5 V 40 A güç kaynağı</text>
+          <text class="w-s" x="235" y="72" text-anchor="middle">200 W · kaidede</text>
           <path class="w-pow" d="M235 96 V196"/>
           <text class="w-s" x="243" y="150">5 V</text>
           <rect class="w-box" x="150" y="196" width="170" height="76" rx="6"/>
           <text class="w-t" x="235" y="226" text-anchor="middle">Raspberry Pi Zero 2 W</text>
-          <text class="w-s" x="235" y="244" text-anchor="middle">+ HUB75 sürücü kartı</text>
-          <text class="w-s" x="235" y="260" text-anchor="middle">3,3 V → 5 V seviye çevirici</text>
+          <text class="w-s" x="235" y="244" text-anchor="middle">+ HUB75 adaptörü</text>
+          <text class="w-s" x="235" y="260" text-anchor="middle">2× 74HCT245 · 3,3 V → 5 V</text>
           <path class="w-pow" d="M320 60 H836"/>
-          <text class="w-s" x="352" y="50">WAGO dağıtım · her panele ayrı 18 AWG çift</text>
+          <text class="w-s" x="352" y="50">3 çıkış · her modüle ayrı 18 AWG çift</text>
           <g id="wpanels"></g>
-          <path class="w-data" d="M320 234 H350 V156 H378" marker-end="url(#ar)"/>
-          <text class="w-s" x="380" y="232">Veri: Pi → 1 → 2 → 3 → 4 → 5</text>
-          <text class="w-s" x="380" y="248">her panelin OUT soketi bir sonrakinin IN soketine</text>
+          <path class="w-data" d="M320 234 H350 V122 H378" marker-end="url(#ar)"/>
+          <path class="w-data" d="M824 122 H844 V162 H828" marker-end="url(#ar)"/>
+          <text class="w-s" x="380" y="216">Veri: Pi → 1…5 üst sıra → 6…10 alt sıra (U şeklinde)</text>
+          <text class="w-s" x="380" y="232">alt sıradaki modüller 180° ters takılır</text>
+          <text class="w-s" x="380" y="248">her modülün OUT soketi bir sonrakinin IN soketine</text>
           <path class="w-data" d="M380 282 H408"/><text class="w-s" x="414" y="286">HUB75 veri · 16 pin şerit</text>
           <path class="w-pow" d="M600 282 H628"/><text class="w-s" x="634" y="286">5 V güç</text>
         </svg>
@@ -283,37 +285,77 @@ tfoot td{font-weight:600;border-bottom:0}
       <div class="card" style="display:flex;flex-direction:column;gap:12px">
         <h3>Neden bu tasarım</h3>
         <ul class="why">
-          <li><b>HUB75 panel</b> piksel başına en ucuz parlak ekran: 4096 RGB LED yaklaşık 12 $.</li>
-          <li><b>Tek zincir:</b> beş panel seri bağlanır, Pi tek kablodan hepsini sürer. Ek kontrol kartı yok.</li>
-          <li><b>Pi Zero 2 W</b> MP4 ve GIF'i doğrudan oynatır, dosyayı Wi-Fi ile atarsın. ESP32 yaklaşık 12 $ daha ucuz ama 5 panelde renk derinliği düşer ve her videoyu önceden özel formata çevirmen gerekir.</li>
-          <li><b>Ön yüz açık:</b> bakış penceresi. İstersen önüne yarı geçirgen ayna film yapıştırıp sonsuzluk etkisi ekleyebilirsin.</li>
-          <li><b>Güç:</b> 64×64 panel tam beyazda yaklaşık 4 A çeker. 5 panel × 4 A = 20 A, bu yüzden 20 A kaynak ve parlaklık %70.</li>
+          <li><b>P5 320×160 modül</b> Türkiye'deki LED tabela piyasasının standart parçası. Tabela ve LED ekran satan yerlerde stokta bulunur, modül başına yaklaşık 1.100 TL.</li>
+          <li><b>İki modül bir yüz eder:</b> 320×320 mm, 64×64 piksel. Yüz başına piksel sayısı ilk tasarımla aynı, küp iki kat büyük.</li>
+          <li><b>Tek zincir, U düzeni:</b> 10 modül seri bağlanır. Pi'deki U-mapper ayarı onları tek bir 320×64 ekran gibi gösterir, video hazırlama değişmez.</li>
+          <li><b>Pi Zero 2 W</b> Robotistan'da var, MP4 ve GIF'i doğrudan oynatır. Adaptörü iki entegreyle kendin yaparsın; hazır kart ithal ve pahalı.</li>
+          <li><b>Güç:</b> bir modül tam beyazda en fazla yaklaşık 4 A çeker. 10 modül × 4 A = 40 A, bu yüzden 5 V 40 A tabela adaptörü.</li>
+          <li><b>Yurt dışından getirtebilirsen</b> 5 adet P2.5 64×64 panelle 160 mm'lik bir küp yaklaşık 120 $'a çıkar. Yazılım aynı.</li>
         </ul>
-        <p class="note">220 V uçlarını yalıtılmış kutuda tut, girişe sigorta koy. 5 V tarafında 20 A akar: ana hat kalın (14 AWG), panellere giden kablolar ayrı ayrı.</p>
+        <p class="note">220 V uçlarını yalıtılmış kutuda tut, girişe sigorta koy. 5 V tarafında 40 A'e kadar akım olur: adaptörün üç V+/GND çıkışını kullan, her birinden 3–4 modüle ayrı kablo çek.</p>
       </div>
     </div>
   </section>
 
   <section class="block">
     <h2>Malzeme listesi</h2>
-    <p class="lead">Fiyatlar AliExpress'te yaklaşık değerlerdir, dolar cinsinden. Elektronik görünümde bir satırın üzerine gelince parça küpte vurgulanır.</p>
+    <p class="lead">Fiyatlar aramada görülen Türkiye satış fiyatlarıdır, KDV dahil; ≈ ile işaretliler tahmindir. Modül alırken satıcıya 64×32 piksel, 1/16 tarama ve HUB75 olduğunu sor. Dış mekan P5'ler genelde 1/8 taramadır, onları alma. Elektronik görünümde bir satırın üzerine gelince parça küpte vurgulanır.</p>
     <div class="card scroll" style="padding:4px 6px">
       <table>
         <thead><tr><th>Parça</th><th class="n">Adet</th><th>Görevi</th><th class="n">≈ Fiyat</th></tr></thead>
         <tbody>
-          <tr data-hl="panel"><td>P2.5 64×64 RGB LED panel, HUB75E<small>1/32 tarama, 160×160 mm</small></td><td class="n">5</td><td>Küpün 5 iç yüzü, panel başına 4096 LED</td><td class="n">60 $</td></tr>
-          <tr data-hl="pi"><td>Raspberry Pi Zero 2 W</td><td class="n">1</td><td>Videoyu çözer, zinciri sürer</td><td class="n">18 $</td></tr>
-          <tr data-hl="hat"><td>HUB75 sürücü kartı<small>Electrodragon RGB Matrix board (E pinli) · ya da 2× 74HCT245 ile kendin yap (≈2 $)</small></td><td class="n">1</td><td>Pi'nin 3,3 V sinyalini 5 V'a çevirir, HUB75 soketi verir</td><td class="n">9 $</td></tr>
-          <tr data-hl="psu"><td>5 V 20 A (100 W) güç kaynağı</td><td class="n">1</td><td>Panelleri ve Pi'yi besler</td><td class="n">12 $</td></tr>
-          <tr data-hl="pi"><td>microSD kart 16 GB</td><td class="n">1</td><td>İşletim sistemi ve videolar</td><td class="n">4 $</td></tr>
-          <tr data-hl="ribbon"><td>16 pin IDC şerit kablo</td><td class="n">5</td><td>Veri zinciri</td><td class="n">panelle gelir</td></tr>
-          <tr data-hl="power"><td>WAGO 221 klemens + kablo<small>50 cm 14 AWG ana hat, 2 m 18 AWG kırmızı/siyah</small></td><td class="n">1 set</td><td>5 V'u panellere yıldız bağlantıyla dağıtır</td><td class="n">5 $</td></tr>
-          <tr data-hl="cap"><td>1000 µF 10 V kapasitör</td><td class="n">5</td><td>Her panelin güç girişinde ani akım düşüşünü yumuşatır</td><td class="n">2 $</td></tr>
-          <tr data-hl="psu"><td>IEC soket + anahtar + 3 A sigorta</td><td class="n">1</td><td>220 V girişi</td><td class="n">3 $</td></tr>
-          <tr data-hl="frame"><td>3 mm MDF (lazer kesim) ya da 3D baskı köşe parçaları<small>panellerin mıknatıslı vidaları kutuyla gelir</small></td><td class="n">1</td><td>Gövde ve elektronik kaidesi</td><td class="n">6 $</td></tr>
+          <tr data-hl="panel"><td>P5 iç mekan RGB LED modül<small>320×160 mm, 64×32 piksel, 1/16 tarama, HUB75 · LED tabela/ekran satıcılarında (KontrolKart'ta 910 TL + KDV)</small></td><td class="n">10</td><td>İki modül bir yüz eder: küpün 5 iç yüzü</td><td class="n">10.920 TL</td></tr>
+          <tr data-hl="pi"><td>Raspberry Pi Zero 2 W, pinleri lehimli<small>Robotistan</small></td><td class="n">1</td><td>Videoyu çözer, zinciri sürer</td><td class="n">1.031 TL</td></tr>
+          <tr data-hl="hat"><td>HUB75 adaptörü parçaları<small>2× 74HCT245, pertinaks, 2×20 dişi pin soket, 16 pin IDC erkek soket · Direnç.net</small></td><td class="n">1 set</td><td>Pi'nin 3,3 V sinyalini 5 V'a çevirir</td><td class="n">≈ 150 TL</td></tr>
+          <tr data-hl="psu"><td>5 V 40 A (200 W) ince metal kasa adaptör<small>MS-200-5 · Direnç.net</small></td><td class="n">1</td><td>10 modülü ve Pi'yi besler</td><td class="n">1.006 TL</td></tr>
+          <tr data-hl="pi"><td>microSD kart 16 GB</td><td class="n">1</td><td>İşletim sistemi ve videolar</td><td class="n">≈ 200 TL</td></tr>
+          <tr data-hl="ribbon"><td>16 pin IDC şerit kablo</td><td class="n">10</td><td>Veri zinciri</td><td class="n">modülle gelir</td></tr>
+          <tr data-hl="power"><td>WAGO 221 klemens + kablo<small>4 m 18 AWG kırmızı/siyah</small></td><td class="n">1 set</td><td>5 V'u modüllere ayrı ayrı dağıtır</td><td class="n">≈ 400 TL</td></tr>
+          <tr data-hl="cap"><td>1000 µF 10 V kapasitör</td><td class="n">10</td><td>Her modülün güç girişinde ani akım düşüşünü yumuşatır</td><td class="n">≈ 60 TL</td></tr>
+          <tr data-hl="psu"><td>IEC soket + anahtar + 3 A sigorta</td><td class="n">1</td><td>220 V girişi</td><td class="n">≈ 150 TL</td></tr>
+          <tr data-hl="frame"><td>6 mm MDF, lazer kesim<small>küp gövdesi (iç ölçü 320 mm) ve elektronik kaidesi; modüller mıknatıs ya da M3 vidayla tutturulur</small></td><td class="n">1</td><td>Gövde</td><td class="n">≈ 500 TL</td></tr>
         </tbody>
-        <tfoot><tr><td colspan="3">Toplam</td><td class="n">≈ 119 $</td></tr></tfoot>
+        <tfoot><tr><td colspan="3">Toplam</td><td class="n">≈ 14.400 TL</td></tr></tfoot>
       </table>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>HUB75 adaptörü (kendin yap)</h2>
+    <p class="lead">Pi için hazır HUB75 kartları Türkiye'de zor bulunur. Aynı işi iki 74HCT245 entegresi yapar: Pi'nin 3,3 V çıkışlarını modülün beklediği 5 V'a çevirir. Parçaların hepsi Direnç.net veya Robotistan'da var.</p>
+    <div class="two">
+      <div class="card scroll" style="padding:4px 6px">
+        <table>
+          <thead><tr><th>Sinyal</th><th class="n">HUB75 pini</th><th>Pi GPIO</th><th class="n">Pi pini</th></tr></thead>
+          <tbody class="mono" style="font-size:13px">
+            <tr><td>R1</td><td class="n">1</td><td>GPIO 11</td><td class="n">23</td></tr>
+            <tr><td>G1</td><td class="n">2</td><td>GPIO 27</td><td class="n">13</td></tr>
+            <tr><td>B1</td><td class="n">3</td><td>GPIO 7</td><td class="n">26</td></tr>
+            <tr><td>R2</td><td class="n">5</td><td>GPIO 8</td><td class="n">24</td></tr>
+            <tr><td>G2</td><td class="n">6</td><td>GPIO 9</td><td class="n">21</td></tr>
+            <tr><td>B2</td><td class="n">7</td><td>GPIO 10</td><td class="n">19</td></tr>
+            <tr><td>A</td><td class="n">9</td><td>GPIO 22</td><td class="n">15</td></tr>
+            <tr><td>B</td><td class="n">10</td><td>GPIO 23</td><td class="n">16</td></tr>
+            <tr><td>C</td><td class="n">11</td><td>GPIO 24</td><td class="n">18</td></tr>
+            <tr><td>D</td><td class="n">12</td><td>GPIO 25</td><td class="n">22</td></tr>
+            <tr><td>CLK</td><td class="n">13</td><td>GPIO 17</td><td class="n">11</td></tr>
+            <tr><td>LAT / STB</td><td class="n">14</td><td>GPIO 4</td><td class="n">7</td></tr>
+            <tr><td>OE</td><td class="n">15</td><td>GPIO 18</td><td class="n">12</td></tr>
+            <tr><td>GND</td><td class="n">4, 8, 16</td><td>GND</td><td class="n">6, 9, 14, 20, 25</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:12px">
+        <h3>74HCT245 bağlantısı</h3>
+        <ul class="why">
+          <li>Her entegrede <b>pin 20</b> → 5 V, <b>pin 10</b> → GND.</li>
+          <li><b>pin 1 (DIR)</b> → 5 V: sinyal A tarafından B tarafına akar.</li>
+          <li><b>pin 19 (OE)</b> → GND: çıkışlar hep açık.</li>
+          <li>Pi'den gelen 13 sinyal A girişlerine (pin 2–9), modüle giden uçlar B çıkışlarına (pin 18–11) bağlanır. İki entegrede 3 kanal boş kalır.</li>
+          <li>Pi'yi güç kaynağından <b>pin 2 (5 V)</b> ve <b>pin 6 (GND)</b> üzerinden besle. Pi ile modüllerin GND'si ortak olmalı.</li>
+          <li>Bu tablo rpi-rgb-led-matrix'in <span class="mono">regular</span> bağlantısıdır. 64×32 modülde E sinyali yoktur, HUB75 pin 8 GND'dir.</li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -334,7 +376,7 @@ sudo reboot</pre><button data-copy="c1">Kopyala</button></div>
         <p>Seçili dağıtım modu: <b id="modeName">Kesintisiz açılım</b>. <span id="c2note"></span></p></div>
       <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">Oynat</h3>
         <div class="code"><pre id="c3"></pre><button data-copy="c3">Kopyala</button></div>
-        <p>Panel boş ya da karışık kalırsa sona <span class="mono">--led-panel-type=FM6126A</span> ekle. Bir yüz dönük görünüyorsa Test desenini aç ve o paneli fiziksel olarak çevir; oklar her yüzde simülasyondaki yöne bakmalı.</p></div>
+        <p>Modül boş ya da karışık kalırsa arkasındaki sürücü entegreye bak: FM6126A ya da FM6127 yazıyorsa sona <span class="mono">--led-panel-type=FM6126A</span> (veya FM6127) ekle. Bir yüz dönük görünüyorsa Test desenini aç: her yüzde ok yukarıyı göstermeli, numara düz okunmalı. Ters görünen modülü 180° çevir.</p></div>
       <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">Açılışta otomatik başlat</h3>
         <div class="code"><pre id="c4"></pre><button data-copy="c4">Kopyala</button></div>
         <p><b>pi</b> yerine kendi kullanıcı adını yaz. Yeni video için <span class="mono">kup.mp4</span>'ü değiştirip <span class="mono">sudo systemctl restart kup</span> demen yeterli.</p></div>
@@ -357,10 +399,10 @@ const $ = s => document.querySelector(s);
 const V3 = THREE.Vector3;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------- ölçüler (1 birim = 100 mm) ---------- */
-const H = 0.8;            // iç yarı genişlik: 160 mm panel
-const T = 0.13;           // panel kalınlığı 13 mm
-const S = 0.03;           // MDF 3 mm (görsel olarak kalın)
+/* ---------- ölçüler (1 birim = 200 mm) ---------- */
+const H = 0.8;            // iç yarı genişlik: 320 mm yüz = 2 × (320×160 modül)
+const T = 0.075;          // modül kalınlığı 15 mm
+const S = 0.03;           // MDF 6 mm
 const E = H + T + 0.005 + S;
 const PL = 0.5;           // kaide yüksekliği
 const FACES = [
@@ -447,7 +489,7 @@ const M = {
   term: std(0x161616),
   pi: std(0x1f7a3a, {roughness:0.5}),
   soc: std(0xb9bcc0, {roughness:0.3, metalness:0.8}),
-  hat: std(0x1c2a66, {roughness:0.5}),
+  hat: std(0x8a5a2e, {roughness:0.7}),
   sd: std(0x2a2f36),
   ribbon: std(0x9aa3ad, {roughness:0.7}),
   power: std(0xc8322a, {roughness:0.5}),
@@ -467,15 +509,21 @@ const panels = FACES.map((f, i) => {
   g.position.copy(center);
   const mat = new THREE.ShaderMaterial({ uniforms:{ chain:{value:chainTex}, slot:{value:i}, bright:U.bright, bits:U.bits }, vertexShader:ledVS, fragmentShader:ledFS });
   const face = new THREE.Mesh(new THREE.PlaneGeometry(2*H, 2*H), mat); g.add(face);
-  const body = box(2*H-0.004, 2*H-0.004, T-0.012, M.panelBack); body.position.z = -T/2 - 0.003; g.add(body);
-  const pcb = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 1.36), M.pcb); pcb.rotation.y = Math.PI; pcb.position.z = -T - 0.001; g.add(pcb);
   const zb = -T - 0.018;
   const mk = (w,h,d,m,x,y) => { const b = box(w,h,d,m); b.position.set(x,y,zb); g.add(b); return b; };
-  mk(0.17,0.055,0.035,M.conn,-0.36,0.05); mk(0.17,0.055,0.035,M.conn,0.36,0.05);
-  mk(0.09,0.04,0.03,M.connW,0,-0.45);
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.024,0.024,0.07,16), M.cap); cap.rotation.x = Math.PI/2; cap.position.set(0.14,-0.45,-T-0.035); g.add(cap);
+  // her yüz iki 320×160 modül: üstteki düz, alttaki 180° ters (U-mapper düzeni)
+  const bodies = [], mods = [];
+  [H/2, -H/2].forEach((my, j) => {
+    const body = box(2*H-0.006, H-0.006, T-0.008, M.panelBack); body.position.set(0, my, -T/2 - 0.002); g.add(body); bodies.push(body);
+    const pcb = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.66), M.pcb); pcb.rotation.y = Math.PI; pcb.position.set(0, my, -T - 0.001); g.add(pcb);
+    const s = j === 0 ? 1 : -1, cy = my + 0.1*s, py = my - 0.2*s;
+    mk(0.165,0.045,0.035,M.conn,-0.4*s,cy); mk(0.165,0.045,0.035,M.conn,0.4*s,cy);
+    mk(0.08,0.035,0.03,M.connW,0,py);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.06,16), M.cap); cap.rotation.x = Math.PI/2; cap.position.set(0.12,py,-T-0.03); g.add(cap);
+    mods.push({ inL:new V3(-0.4*s,cy,zb-0.02), outL:new V3(0.4*s,cy,zb-0.02), pwrL:new V3(0,py,zb-0.02), backL:new V3(0,my,-T-0.05), half: j === 0 ? 'üst' : 'alt' });
+  });
   scene.add(g);
-  return { g, face, body, center, az, name:f.name, inL:new V3(-0.36,0.05,zb-0.02), outL:new V3(0.36,0.05,zb-0.02), pwrL:new V3(0,-0.45,zb-0.02), backL:new V3(0,0.35,-T-0.05) };
+  return { g, face, bodies, mods, center, az, name:f.name };
 });
 
 /* ---------- gövde ve kaide ---------- */
@@ -501,27 +549,35 @@ add(box(0.12,0.07,0.02,M.term), 1.05, -E - 0.22, PD/2 + 0.01, scene);
 /* elektronik (kaidenin içinde) */
 const elec = new THREE.Group(); scene.add(elec);
 const yb = -E - PL;
-const psu = add(box(1.99, 0.42, 0.98, M.psu), 0.12, yb + 0.24, -0.45, elec);
-add(box(0.62, 0.11, 0.06, M.term), 0.65, yb + 0.12, 0.07, elec);
-const pi = add(box(0.65, 0.014, 0.30, M.pi), -0.72, yb + 0.06, 0.62, elec);
-add(box(0.12, 0.012, 0.12, M.soc), -0.74, yb + 0.072, 0.62, elec);
-add(box(0.11, 0.008, 0.08, M.sd), -1.02, yb + 0.06, 0.62, elec);
-add(box(0.52, 0.07, 0.05, M.conn), -0.72, yb + 0.105, 0.5, elec);
-const hat = add(box(0.72, 0.016, 0.5, M.hat), -0.72, yb + 0.15, 0.62, elec);
-add(box(0.17, 0.055, 0.045, M.conn), -0.72, yb + 0.185, 0.47, elec);
-add(box(0.1, 0.05, 0.06, std(0x1d6b3c)), -0.45, yb + 0.18, 0.78, elec);
-const hatConn = new V3(-0.72, yb + 0.21, 0.47);
-const hatPwr = new V3(-0.45, yb + 0.21, 0.78);
-const psuTerm = new V3(0.65, yb + 0.18, 0.11);
+// 5 V 40 A ince metal kasa (215×115×30 mm)
+const psu = add(box(1.075, 0.15, 0.575, M.psu), 0.3, yb + 0.1, -0.35, elec);
+add(box(0.5, 0.06, 0.05, M.term), 0.3, yb + 0.085, -0.035, elec);
+// Pi Zero 2 W (65×30 mm)
+const pi = add(box(0.325, 0.008, 0.15, M.pi), -0.62, yb + 0.05, 0.5, elec);
+add(box(0.06, 0.008, 0.06, M.soc), -0.63, yb + 0.058, 0.5, elec);
+add(box(0.06, 0.005, 0.045, M.sd), -0.79, yb + 0.05, 0.5, elec);
+add(box(0.25, 0.04, 0.025, M.conn), -0.62, yb + 0.075, 0.44, elec);
+// kendin yap HUB75 adaptörü (70×50 mm pertinaks, 2× 74HCT245)
+const hat = add(box(0.35, 0.01, 0.25, M.hat), -0.62, yb + 0.105, 0.5, elec);
+add(box(0.1, 0.02, 0.035, M.conn), -0.69, yb + 0.12, 0.53, elec);
+add(box(0.1, 0.02, 0.035, M.conn), -0.55, yb + 0.12, 0.53, elec);
+add(box(0.165, 0.045, 0.045, M.conn), -0.62, yb + 0.13, 0.41, elec);
+add(box(0.05, 0.03, 0.04, std(0x1d6b3c)), -0.48, yb + 0.125, 0.6, elec);
+const hatConn = new V3(-0.62, yb + 0.16, 0.41);
+const hatPwr = new V3(-0.48, yb + 0.15, 0.6);
+const psuTerm = new V3(0.3, yb + 0.12, -0.03);
 
 /* ---------- kablolar ---------- */
 const mkTube = mat => { const m = new THREE.Mesh(new THREE.BufferGeometry(), mat); scene.add(m); return m; };
-const dataTubes = panels.map(() => mkTube(M.ribbon));
-const powerTubes = panels.map(() => mkTube(M.power));
+// zincir sırası: 1–5 yüzlerin üst modülleri, 6–10 alt modüller ters yönde (U)
+const MODS = [];
+for (let k = 0; k < 10; k++) { const fi = k < 5 ? k : 9 - k; MODS.push({ p: panels[fi], m: panels[fi].mods[k < 5 ? 0 : 1], n: k + 1 }); }
+const dataTubes = MODS.map(() => mkTube(M.ribbon));
+const powerTubes = MODS.map(() => mkTube(M.power));
 const hatPowerTube = mkTube(M.power);
 const dataCurves = [], pulses = [];
 const pulseMat = new THREE.MeshBasicMaterial({color:new THREE.Color(0.55, 2.1, 3.0)});
-for (let k = 0; k < 15; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), pulseMat); scene.add(s); pulses.push(s); }
+for (let k = 0; k < 30; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), pulseMat); scene.add(s); pulses.push(s); }
 
 const W = (p, l) => p.g.localToWorld(l.clone());
 const out = p => p.az.clone().negate();
@@ -529,18 +585,18 @@ function curve(pts){ return new THREE.CatmullRomCurve3(pts, false, 'centripetal'
 function setTube(mesh, c, r){ mesh.geometry.dispose(); mesh.geometry = new THREE.TubeGeometry(c, 48, r, 6, false); }
 function rebuildCables(){
   panels.forEach(p => p.g.updateMatrixWorld(true));
-  panels.forEach((p, k) => {
-    const b = W(p, p.inL);
+  MODS.forEach((x, k) => {
+    const p = x.p, b = W(p, x.m.inL);
     let a, a2;
     if (k === 0) { a = hatConn.clone(); a2 = a.clone().add(new V3(0, 0.3, -0.2)); }
-    else { const q = panels[k-1]; a = W(q, q.outL); a2 = a.clone().addScaledVector(out(q), 0.28); }
-    const c = curve([a, a2, b.clone().addScaledVector(out(p), 0.28), b]);
-    dataCurves[k] = c; setTube(dataTubes[k], c, 0.016);
-    const pw = W(p, p.pwrL);
-    const pc = curve([psuTerm.clone().add(new V3((k-2)*0.05, 0, 0)), psuTerm.clone().add(new V3((k-2)*0.08, 0.35, 0.1)), pw.clone().addScaledVector(out(p), 0.34), pw]);
-    setTube(powerTubes[k], pc, 0.009);
+    else { const q = MODS[k-1]; a = W(q.p, q.m.outL); a2 = a.clone().addScaledVector(out(q.p), 0.22); }
+    const c = curve([a, a2, b.clone().addScaledVector(out(p), 0.22), b]);
+    dataCurves[k] = c; setTube(dataTubes[k], c, 0.014);
+    const pw = W(p, x.m.pwrL), dx = (k - 4.5)*0.03;
+    const pc = curve([psuTerm.clone().add(new V3(dx, 0, 0)), psuTerm.clone().add(new V3(dx*2, 0.35, 0.1)), pw.clone().addScaledVector(out(p), 0.3), pw]);
+    setTube(powerTubes[k], pc, 0.008);
   });
-  setTube(hatPowerTube, curve([psuTerm.clone().add(new V3(-0.25,0,0)), new V3(-0.1, yb + 0.3, 0.45), hatPwr]), 0.009);
+  setTube(hatPowerTube, curve([psuTerm.clone().add(new V3(-0.22,0,0)), new V3(-0.2, yb + 0.25, 0.3), hatPwr]), 0.008);
 }
 
 /* ---------- etiketler ---------- */
@@ -550,14 +606,14 @@ function addLabel(id, text, get, badge=false){
   const el = document.createElement('div'); el.className = 'lbl' + (badge ? ' badge' : ''); el.textContent = text; el.style.opacity = 0;
   labelsEl.appendChild(el); labelEls.push({id, el, get});
 }
-addLabel('panel', 'P2.5 64×64 HUB75 panel ×5', () => W(panels[2], panels[2].backL).add(new V3(0, 0.12, 0)));
-addLabel('psu', '5 V 20 A güç kaynağı', () => psu.position.clone().add(new V3(0.5, 0.22, 0)));
-addLabel('pi', 'Raspberry Pi Zero 2 W', () => pi.position.clone().add(new V3(-0.2, 0.02, 0.15)));
-addLabel('hat', 'HUB75 sürücü kartı', () => hat.position.clone().add(new V3(0.2, 0.03, 0)));
+addLabel('panel', 'P5 320×160 modül ×10', () => W(panels[2], new V3(0, 0.66, -T-0.05)));
+addLabel('psu', '5 V 40 A güç kaynağı', () => psu.position.clone().add(new V3(0.3, 0.1, 0)));
+addLabel('pi', 'Raspberry Pi Zero 2 W', () => pi.position.clone().add(new V3(-0.1, 0.01, 0.08)));
+addLabel('hat', 'HUB75 adaptörü (2× 74HCT245)', () => hat.position.clone().add(new V3(0.12, 0.03, 0)));
 addLabel('ribbon', 'HUB75 şerit kablo (veri)', () => dataCurves[1] ? dataCurves[1].getPointAt(0.5) : new V3());
-addLabel('power', '5 V güç hattı', () => new V3(0.62, yb + 0.55, 0.3));
-addLabel('cap', '1000 µF kapasitör', () => W(panels[3], new V3(0.14,-0.45,-T-0.08)));
-panels.forEach((p, i) => addLabel('n'+i, `${i+1} · ${p.name}`, () => W(p, new V3(0, -0.05, -T-0.06)), true));
+addLabel('power', '5 V güç hattı', () => new V3(0.55, yb + 0.5, 0.05));
+addLabel('cap', '1000 µF kapasitör', () => W(panels[3], new V3(0.12, H/2 - 0.2, -T-0.07)));
+MODS.forEach((x, k) => addLabel('n'+k, `${x.n} · ${x.p.name} ${x.m.half}`, () => W(x.p, x.m.backL), true));
 
 /* ---------- kaynaklar ---------- */
 const netC = document.createElement('canvas'); netC.width = netC.height = 192; const nctx = netC.getContext('2d');
@@ -735,13 +791,13 @@ function measure(){
     sums[(x/64)|0] += (lr + lg + lb)/3; r += lr; g += lg; b += lb;
   }
   const br = U.bright.value;
-  for (let k = 0; k < 5; k++) panelAmps[k] = 0.12 + 3.9*(sums[k]/4096)*br;
+  for (let k = 0; k < 5; k++) panelAmps[k] = 0.25 + 7.8*(sums[k]/4096)*br;   // yüz = 2 modül, modül başına en fazla ≈4 A
   const n = 320*64; avgCol = [r/n*br, g/n*br, b/n*br];
 }
 function refreshHz(bits){
-  const shiftUs = 320*0.015*3, lsbUs = 0.13;
+  const shiftUs = 640*0.015*3, lsbUs = 0.13;   // 10 × 64 sütun, 1/16 tarama
   const row = bits*(shiftUs + 1) + lsbUs*(Math.pow(2, bits) - 1);
-  return 1e6/(32*row);
+  return 1e6/(16*row);
 }
 
 /* ---------- UI ---------- */
@@ -751,12 +807,14 @@ const wp = $('#wpanels');
 FACES.forEach((f, i) => {
   const x = 380 + i*92, cx = x + 38;
   wp.insertAdjacentHTML('beforeend',
-    `<path class="w-pow" d="M${cx} 60 V118"/><circle class="w-dot" cx="${cx}" cy="60" r="3.5"/>
-     <rect class="w-panel" x="${x}" y="118" width="76" height="76" rx="4"/>
-     <text class="w-n" x="${cx}" y="152" text-anchor="middle">${i+1}</text>
-     <text class="w-t" x="${cx}" y="170" text-anchor="middle" style="font-size:12px">${f.name}</text>
-     <text class="w-s" x="${cx}" y="186" text-anchor="middle">64×64</text>` +
-    (i < 4 ? `<path class="w-data" d="M${x+76} 156 H${x+90}" marker-end="url(#ar)"/>` : ''));
+    `<path class="w-pow" d="M${cx} 60 V104"/><circle class="w-dot" cx="${cx}" cy="60" r="3.5"/>
+     <rect class="w-panel" x="${x}" y="104" width="76" height="36" rx="3"/>
+     <rect class="w-panel" x="${x}" y="144" width="76" height="36" rx="3"/>
+     <text class="w-n" x="${cx}" y="129" text-anchor="middle" style="font-size:17px">${i+1}</text>
+     <text class="w-n" x="${cx}" y="169" text-anchor="middle" style="font-size:17px">${10-i}</text>
+     <text class="w-s" x="${cx}" y="196" text-anchor="middle">${f.name}</text>` +
+    (i < 4 ? `<path class="w-data" d="M${x+76} 122 H${x+90}" marker-end="url(#ar)"/>` : '') +
+    (i > 0 ? `<path class="w-data" d="M${x} 162 H${x-14}" marker-end="url(#ar)"/>` : ''));
 });
 
 const FF = {
@@ -768,7 +826,7 @@ const MODE_NAMES = {net:'Kesintisiz açılım', same:'Her yüzde aynı', pano:'P
 const DEF_NAMES = ['arka', 'sol', 'tavan', 'sag', 'zemin'];
 function updateCommands(){
   const bits = U.bits.value, pct = Math.round(U.bright.value*100);
-  const flags = `--led-rows=64 --led-cols=64 --led-chain=5 --led-gpio-mapping=regular --led-slowdown-gpio=2 --led-pwm-bits=${bits} --led-brightness=${pct}`;
+  const flags = `--led-rows=32 --led-cols=64 --led-chain=10 --led-pixel-mapper=U-mapper --led-gpio-mapping=regular --led-slowdown-gpio=2 --led-pwm-bits=${bits} --led-brightness=${pct}`;
   if (state.mode === 'sep') {
     const ins = panelSrc.map((s, i) => `-stream_loop -1 -i "${s.media ? s.name : DEF_NAMES[i] + '.mp4'}"`).join(' ');
     const fc = panelSrc.map((s, i) => `[${i}:v]scale=64:64:force_original_aspect_ratio=increase,crop=64:64,setsar=1,fps=30[f${i}]`).join(';') + ';[f0][f1][f2][f3][f4]hstack=inputs=5';
@@ -867,7 +925,7 @@ $('#bloom').addEventListener('change', e => { bloom.enabled = e.target.checked; 
 
 /* sahnede panel seçme: sürükle-bırak ve çift tık */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-const pickList = [...panels.map(p => p.face), ...panels.map(p => p.body), ...shell.children];
+const pickList = [...panels.map(p => p.face), ...panels.flatMap(p => p.bodies), ...shell.children];
 function panelAt(cx, cy){
   const r = vp.getBoundingClientRect();
   ndc.set((cx - r.left)/r.width*2 - 1, -((cy - r.top)/r.height)*2 + 1);
@@ -971,7 +1029,7 @@ function loop(){
   pulses.forEach((s, j) => {
     s.visible = showCables;
     if (!showCables) return;
-    const k = (j/3)|0, ph = ((t*0.55 - k*0.2 + (j%3)/3) % 1 + 1) % 1;
+    const k = (j/3)|0, ph = ((t*0.55 - k*0.1 + (j%3)/3) % 1 + 1) % 1;
     s.position.copy(dataCurves[k].getPointAt(ph));
   });
 
@@ -1001,7 +1059,7 @@ function loop(){
 
 function updateReadouts(){
   const panelsA = panelAmps.reduce((a, b) => a + b, 0), total = panelsA + 0.35, watts = total*5;
-  const pct = total/20*100, hz = refreshHz(U.bits.value);
+  const pct = total/40*100, hz = refreshHz(U.bits.value);
   $('#pA').innerHTML = `<i>akım</i>${total.toFixed(1)} A`;
   $('#pW').innerHTML = `<i>güç</i>${watts.toFixed(0)} W`;
   $('#pHz').innerHTML = `<i>tazeleme</i>≈${hz.toFixed(0)} Hz`;
@@ -1012,9 +1070,9 @@ function updateReadouts(){
   $('#psuBar').firstElementChild.style.width = Math.min(100, pct).toFixed(1) + '%';
   $('#psuBar').classList.toggle('hot', pct > 85);
   $('#psuTxt').textContent = pct > 85
-    ? `20 A kaynağın %${pct.toFixed(0)}'i kullanılıyor. Parlaklığı düşür.`
-    : `20 A güç kaynağının %${pct.toFixed(0)}'i kullanılıyor (Pi dahil). Tazeleme ${hz < 100 ? 'düşük, kamerada titrer' : 'titreşimsiz'}.`;
-  panelAmps.forEach((a, i) => { $('#pbv' + i).style.height = Math.min(100, a/4*100).toFixed(0) + '%'; $('#pbt' + i).textContent = a.toFixed(1) + ' A'; });
+    ? `40 A kaynağın %${pct.toFixed(0)}'i kullanılıyor. Parlaklığı düşür.`
+    : `40 A güç kaynağının %${pct.toFixed(0)}'i kullanılıyor (Pi dahil). Tazeleme ${hz < 100 ? 'düşük, kamerada titrer' : 'titreşimsiz'}.`;
+  panelAmps.forEach((a, i) => { $('#pbv' + i).style.height = Math.min(100, a/8*100).toFixed(0) + '%'; $('#pbt' + i).textContent = a.toFixed(1) + ' A'; });
 }
 
 requestAnimationFrame(loop);
