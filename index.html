@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="İç yüzeyleri HUB75 LED panel olan küpün 3B simülasyonu: video/GIF oynatma, elektronik görünüm, güç ölçümü, malzeme listesi.">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>LED Küp Simülatörü</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: enstrüman tezgâhı — solda canlı 3B sahne, sağda kontrol rafı; altta zincir şeridi, bağlantı şeması, malzeme listesi, yazılım */
+:root{
+  --bg:#0a0c0f; --surface:#11151a; --surface2:#171c23; --line:#252d37; --fg:#e7eaee; --muted:#8c97a5;
+  --accent:#ffb547; --data:#4fd6ff; --power:#ff5d52; --ok:#6fdc8c;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1320px;margin:0 auto;padding-block:22px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:clamp(26px,3.4vw,38px);line-height:1.1}
+h2{font-size:22px}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:500}
+p{margin:0}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--muted)}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.spec{font-family:var(--f-mono);font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px}
+.spec b{color:var(--accent);font-weight:500}
+
+/* sahne */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:18px;align-items:start}
+@media (max-width:960px){.stage{grid-template-columns:minmax(0,1fr)}}
+.viewport{position:relative;height:clamp(380px,70vh,700px);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#06080a;touch-action:none}
+.viewport canvas.gl{display:block;width:100%;height:100%}
+.ov{position:absolute;pointer-events:none}
+.ov-read{top:12px;left:12px;display:flex;flex-wrap:wrap;gap:6px;right:12px}
+.pill{font-family:var(--f-mono);font-size:12px;background:rgba(10,12,15,.72);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--fg);font-variant-numeric:tabular-nums;backdrop-filter:blur(4px)}
+.pill i{font-style:normal;color:var(--muted);margin-right:5px}
+.pill.warn{border-color:var(--power);color:var(--power)}
+.views{position:absolute;left:12px;bottom:12px;display:flex;gap:4px;background:rgba(10,12,15,.78);border:1px solid var(--line);border-radius:8px;padding:4px;backdrop-filter:blur(4px)}
+.views button{font:500 13px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:5px;padding:6px 11px;cursor:pointer}
+.views button[aria-pressed="true"]{background:var(--accent);color:#1a1205}
+.views button:focus-visible,.btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{position:absolute;right:12px;bottom:14px;font-size:12px;color:var(--muted);pointer-events:none;text-align:right;max-width:46%}
+@media (max-width:560px){.hint{display:none}}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-100%);font:500 11.5px var(--f-mono);white-space:nowrap;padding:3px 7px;border-radius:5px;background:rgba(8,10,13,.86);border:1px solid var(--line);color:var(--fg);transition:opacity .2s}
+.lbl::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:10px;background:var(--muted)}
+.lbl.badge{transform:translate(-50%,-50%);background:var(--accent);color:#1a1205;border-color:var(--accent);font-weight:600}
+.lbl.badge::after{display:none}
+.lbl.hot{border-color:var(--accent);color:var(--accent)}
+.prow{display:grid;grid-template-columns:20px 46px minmax(0,1fr) auto;gap:2px 8px;align-items:center;padding-block:8px;border-top:1px solid var(--line)}
+.prow:first-child{border-top:0;padding-top:0}
+.prow b{color:var(--accent);font:600 15px var(--f-display)}
+.prow span{font-size:13px}
+.prow select{min-width:0;font:13px var(--f-body);background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:5px;padding:5px 6px}
+.prow select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.prow .btn{padding:5px 9px;font-size:12.5px}
+.prow .media-name{grid-column:2/-1}
+.prow.on b{text-shadow:0 0 8px var(--accent)}
+.drop{pointer-events:none;position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,12,15,.35);border:2px dashed var(--accent);border-radius:10px;font:600 18px var(--f-display);color:var(--accent)}
+.glfail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+
+/* kontrol rafı */
+.ctrl{display:flex;flex-direction:column;gap:20px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.grp{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.btn{font:500 13px var(--f-body);color:var(--fg);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#1a1205;border-color:var(--accent);font-weight:600}
+.seg{display:flex;flex-direction:column;gap:4px}
+.seg button{text-align:left;font:500 13.5px var(--f-body);color:var(--fg);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.seg button small{color:var(--muted);font-size:12px;font-weight:400}
+.seg button[aria-pressed="true"]{border-color:var(--accent)}
+.seg button[aria-pressed="true"] span{color:var(--accent)}
+.media-name{font:12px var(--f-mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slider{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.slider label{font-size:13.5px}
+.slider output{font:500 13px var(--f-mono);color:var(--accent);font-variant-numeric:tabular-nums}
+.slider input{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.slider small{grid-column:1/-1;color:var(--muted);font-size:12px}
+.chk{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+.meter{display:flex;flex-direction:column;gap:8px}
+.big{display:flex;align-items:baseline;gap:10px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.big b{font-size:26px;font-weight:500;color:var(--fg)}
+.big span{color:var(--muted);font-size:13px}
+.bar{height:8px;border-radius:4px;background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.bar > div{height:100%;width:0;background:var(--ok);transition:width .25s}
+.bar.hot > div{background:var(--power)}
+.pbars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pb{display:flex;flex-direction:column;gap:3px;align-items:stretch;font:11px var(--f-mono);color:var(--muted);text-align:center}
+.pb .v{height:44px;background:var(--surface2);border:1px solid var(--line);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden}
+.pb .v div{width:100%;background:var(--accent);height:0;transition:height .25s}
+.pb em{font-style:normal;color:var(--fg);font-variant-numeric:tabular-nums}
+
+/* bölümler */
+section.block{display:flex;flex-direction:column;gap:14px}
+.lead{max-width:70ch;color:var(--muted)}
+.strip-wrap{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+#strip{width:100%;aspect-ratio:5/1;image-rendering:pixelated;display:block;border-radius:3px;background:#000}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);font:12px var(--f-mono);color:var(--muted);text-align:center}
+.slots span{border-left:1px solid var(--line);padding-top:2px}
+.slots span:first-child{border-left:0}
+.slots b{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:960px){.two{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.scroll{overflow-x:auto}
+svg.wiring{display:block;min-width:700px;width:100%;height:auto}
+.w-box{fill:var(--surface2);stroke:var(--line);stroke-width:1.2}
+.w-panel{fill:#07090b;stroke:var(--muted);stroke-width:1}
+.w-t{fill:var(--fg);font:500 13px var(--f-body)}
+.w-s{fill:var(--muted);font:11px var(--f-mono)}
+.w-n{fill:var(--accent);font:600 22px var(--f-display)}
+.w-data{stroke:var(--data);stroke-width:2.4;fill:none}
+.w-pow{stroke:var(--power);stroke-width:2.4;fill:none}
+.w-ac{stroke:var(--muted);stroke-width:2;fill:none;stroke-dasharray:5 4}
+.w-dot{fill:var(--power)}
+.w-arrow{fill:var(--data)}
+ul.why{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
+ul.why li::marker{color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:500 11.5px var(--f-body);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td small{display:block;color:var(--muted);font-size:12.5px}
+tbody tr[data-hl]{cursor:default}
+tbody tr[data-hl]:hover td{background:var(--surface2)}
+tbody tr[data-hl]:hover td:first-child{box-shadow:inset 2px 0 0 var(--accent)}
+tfoot td{font-weight:600;border-bottom:0}
+.steps{display:flex;flex-direction:column;gap:16px;counter-reset:s}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 12px}
+.step::before{counter-increment:s;content:counter(s);grid-row:1/span 2;width:28px;height:28px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);display:grid;place-items:center;font:600 13px var(--f-display)}
+.step p{color:var(--muted);max-width:75ch}
+.step p b{color:var(--fg);font-weight:500}
+.code{position:relative;min-width:0}
+.code pre{margin:6px 0 0;background:#05070a;border:1px solid var(--line);border-radius:8px;padding:12px 70px 12px 12px;overflow-x:auto;font:12.5px/1.6 var(--f-mono);color:#cfe6ef;white-space:pre}
+.code button{position:absolute;top:12px;right:8px;font:500 12px var(--f-body);background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:5px;padding:4px 9px;cursor:pointer}
+.note{font-size:13px;color:var(--muted);border-left:2px solid var(--power);padding-left:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1>LED Küp Simülatörü</h1>
+      <p class="muted" style="max-width:62ch">İç yüzeyleri LED panel olan, önü açık bir küp. Simülasyon, gerçek sistemde Pi'nin panellere gönderdiği kareyi üretip panellere dağıtır; gördüğün şey donanımın göstereceğiyle aynıdır.</p>
+    </div>
+    <div class="spec"><span><b>5×</b> HUB75 64×64</span><span><b>20 480</b> RGB LED</span><span><b>160</b> mm iç ölçü</span><span>Pi Zero 2 W</span><span>5 V 20 A</span><span><b>≈ 120 $</b></span></div>
+  </header>
+
+  <section class="stage">
+    <div class="viewport" id="vp">
+      <div class="labels" id="labels"></div>
+      <div class="ov ov-read">
+        <span class="pill" id="pA"><i>akım</i>– A</span>
+        <span class="pill" id="pW"><i>güç</i>– W</span>
+        <span class="pill" id="pHz"><i>tazeleme</i>– Hz</span>
+        <span class="pill" id="pFps"><i>sim</i>– fps</span>
+      </div>
+      <div class="views" role="group" aria-label="Görünüm">
+        <button id="vOut" aria-pressed="true">Dıştan</button>
+        <button id="vElec" aria-pressed="false">Elektronik</button>
+        <button id="vIn" aria-pressed="false">İçeriden</button>
+      </div>
+      <p class="hint">Sürükle: döndür · Tekerlek: yakınlaş<br>Panele çift tık: o panele dosya seç<br>Video veya GIF'i panelin üstüne bırakabilirsin</p>
+      <div class="drop" id="drop" hidden>Bırak, küpte oynasın</div>
+      <div class="glfail" id="glfail" hidden>Bu tarayıcı WebGL açamadı. Chrome veya Edge ile tekrar dene.</div>
+    </div>
+
+    <aside class="ctrl">
+      <div class="grp" id="gContent">
+        <h3>İçerik</h3>
+        <div class="row" id="demos">
+          <button class="btn" data-demo="rings" aria-pressed="true">Halka dalgası</button>
+          <button class="btn" data-demo="plasma" aria-pressed="false">Plazma</button>
+          <button class="btn" data-demo="rain" aria-pressed="false">Dijital yağmur</button>
+          <button class="btn" data-demo="test" aria-pressed="false">Test deseni</button>
+        </div>
+        <div class="row" style="align-items:center">
+          <label for="file" class="btn primary" style="cursor:pointer">Video / GIF yükle</label>
+          <input type="file" id="file" accept="video/*,image/gif,image/png,image/jpeg,image/webp" multiple hidden>
+          <button class="btn" id="pp" hidden>Duraklat</button>
+        </div>
+        <p class="media-name" id="mediaName">Demo içerik oynuyor</p>
+        <p class="muted" style="font-size:12px">Birden fazla dosya seçersen her biri sırayla ayrı panele gider.</p>
+      </div>
+
+      <div class="grp">
+        <h3>Yüzlere dağıtım</h3>
+        <div class="seg" id="modes">
+          <button data-mode="net" aria-pressed="true"><span>Kesintisiz açılım</span><small>Görüntü köşelerden dönerek devam eder</small></button>
+          <button data-mode="same" aria-pressed="false"><span>Her yüzde aynı</span><small>5 panel aynı kareyi gösterir</small></button>
+          <button data-mode="pano" aria-pressed="false"><span>Panorama</span><small>Sol, arka, sağ duvara yayılır; tavan ve zemin ortam ışığı</small></button>
+          <button data-mode="sep" aria-pressed="false"><span>Her panele ayrı</span><small>5 panele 5 ayrı video, GIF ya da demo</small></button>
+        </div>
+      </div>
+
+      <div class="grp" id="gPanels" hidden>
+        <h3>Panel içerikleri</h3>
+        <div id="prows"></div>
+        <p class="muted" style="font-size:12px">Sahnede bir panele çift tıklayarak da dosya seçebilir, dosyayı panelin üstüne sürükleyip bırakabilirsin.</p>
+      </div>
+
+      <div class="grp">
+        <h3>Panel ayarları</h3>
+        <div class="slider">
+          <label for="bright">Parlaklık</label><output id="brightO">70 %</output>
+          <input type="range" id="bright" min="10" max="100" value="70">
+          <small>--led-brightness. Akımı doğrudan düşürür.</small>
+        </div>
+        <div class="slider">
+          <label for="bits">Renk derinliği (PWM bit)</label><output id="bitsO">8 bit</output>
+          <input type="range" id="bits" min="3" max="11" value="8">
+          <small>--led-pwm-bits. Az bit: hızlı tazeleme, kaba renk geçişi.</small>
+        </div>
+        <label class="chk"><input type="checkbox" id="bloom" checked> LED parlama efekti</label>
+      </div>
+
+      <div class="grp meter">
+        <h3>Canlı güç ölçümü</h3>
+        <div class="big"><b id="mA">–</b><span>A · 5 V</span><span id="mW" style="margin-left:auto">– W</span></div>
+        <div class="bar" id="psuBar"><div></div></div>
+        <p class="muted" style="font-size:12.5px" id="psuTxt">20 A güç kaynağının –%'i kullanılıyor</p>
+        <div class="pbars" id="pbars"></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="block">
+    <h2>Zincire giden kare</h2>
+    <p class="lead">Pi beş paneli tek bir 320×64 piksellik ekran olarak görür. Şeritteki her 64 piksellik dilim, veri zincirinde sırası gelen panele gider. Gerçek sistemde Pi'ye tam olarak bu şerit verilir (aşağıdaki ffmpeg komutu videonu buna çevirir).</p>
+    <div class="strip-wrap">
+      <canvas id="strip" width="320" height="64"></canvas>
+      <div class="slots"><span><b>1</b> Arka</span><span><b>2</b> Sol</span><span><b>3</b> Tavan</span><span><b>4</b> Sağ</span><span><b>5</b> Zemin</span></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Bağlantı şeması</h2>
+    <div class="two">
+      <div class="card scroll">
+        <svg class="wiring" viewBox="0 0 860 300" role="img" aria-label="Güç ve veri bağlantı şeması">
+          <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="w-arrow" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+          <rect class="w-box" x="16" y="34" width="96" height="52" rx="6"/>
+          <text class="w-t" x="64" y="58" text-anchor="middle">220 V AC</text>
+          <text class="w-s" x="64" y="75" text-anchor="middle">sigorta + anahtar</text>
+          <path class="w-ac" d="M112 60 H150"/>
+          <rect class="w-box" x="150" y="24" width="170" height="72" rx="6"/>
+          <text class="w-t" x="235" y="54" text-anchor="middle">5 V 20 A güç kaynağı</text>
+          <text class="w-s" x="235" y="72" text-anchor="middle">100 W · kaidede</text>
+          <path class="w-pow" d="M235 96 V196"/>
+          <text class="w-s" x="243" y="150">5 V</text>
+          <rect class="w-box" x="150" y="196" width="170" height="76" rx="6"/>
+          <text class="w-t" x="235" y="226" text-anchor="middle">Raspberry Pi Zero 2 W</text>
+          <text class="w-s" x="235" y="244" text-anchor="middle">+ HUB75 sürücü kartı</text>
+          <text class="w-s" x="235" y="260" text-anchor="middle">3,3 V → 5 V seviye çevirici</text>
+          <path class="w-pow" d="M320 60 H836"/>
+          <text class="w-s" x="352" y="50">WAGO dağıtım · her panele ayrı 18 AWG çift</text>
+          <g id="wpanels"></g>
+          <path class="w-data" d="M320 234 H350 V156 H378" marker-end="url(#ar)"/>
+          <text class="w-s" x="380" y="232">Veri: Pi → 1 → 2 → 3 → 4 → 5</text>
+          <text class="w-s" x="380" y="248">her panelin OUT soketi bir sonrakinin IN soketine</text>
+          <path class="w-data" d="M380 282 H408"/><text class="w-s" x="414" y="286">HUB75 veri · 16 pin şerit</text>
+          <path class="w-pow" d="M600 282 H628"/><text class="w-s" x="634" y="286">5 V güç</text>
+        </svg>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:12px">
+        <h3>Neden bu tasarım</h3>
+        <ul class="why">
+          <li><b>HUB75 panel</b> piksel başına en ucuz parlak ekran: 4096 RGB LED yaklaşık 12 $.</li>
+          <li><b>Tek zincir:</b> beş panel seri bağlanır, Pi tek kablodan hepsini sürer. Ek kontrol kartı yok.</li>
+          <li><b>Pi Zero 2 W</b> MP4 ve GIF'i doğrudan oynatır, dosyayı Wi-Fi ile atarsın. ESP32 yaklaşık 12 $ daha ucuz ama 5 panelde renk derinliği düşer ve her videoyu önceden özel formata çevirmen gerekir.</li>
+          <li><b>Ön yüz açık:</b> bakış penceresi. İstersen önüne yarı geçirgen ayna film yapıştırıp sonsuzluk etkisi ekleyebilirsin.</li>
+          <li><b>Güç:</b> 64×64 panel tam beyazda yaklaşık 4 A çeker. 5 panel × 4 A = 20 A, bu yüzden 20 A kaynak ve parlaklık %70.</li>
+        </ul>
+        <p class="note">220 V uçlarını yalıtılmış kutuda tut, girişe sigorta koy. 5 V tarafında 20 A akar: ana hat kalın (14 AWG), panellere giden kablolar ayrı ayrı.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Malzeme listesi</h2>
+    <p class="lead">Fiyatlar AliExpress'te yaklaşık değerlerdir, dolar cinsinden. Elektronik görünümde bir satırın üzerine gelince parça küpte vurgulanır.</p>
+    <div class="card scroll" style="padding:4px 6px">
+      <table>
+        <thead><tr><th>Parça</th><th class="n">Adet</th><th>Görevi</th><th class="n">≈ Fiyat</th></tr></thead>
+        <tbody>
+          <tr data-hl="panel"><td>P2.5 64×64 RGB LED panel, HUB75E<small>1/32 tarama, 160×160 mm</small></td><td class="n">5</td><td>Küpün 5 iç yüzü, panel başına 4096 LED</td><td class="n">60 $</td></tr>
+          <tr data-hl="pi"><td>Raspberry Pi Zero 2 W</td><td class="n">1</td><td>Videoyu çözer, zinciri sürer</td><td class="n">18 $</td></tr>
+          <tr data-hl="hat"><td>HUB75 sürücü kartı<small>Electrodragon RGB Matrix board (E pinli) · ya da 2× 74HCT245 ile kendin yap (≈2 $)</small></td><td class="n">1</td><td>Pi'nin 3,3 V sinyalini 5 V'a çevirir, HUB75 soketi verir</td><td class="n">9 $</td></tr>
+          <tr data-hl="psu"><td>5 V 20 A (100 W) güç kaynağı</td><td class="n">1</td><td>Panelleri ve Pi'yi besler</td><td class="n">12 $</td></tr>
+          <tr data-hl="pi"><td>microSD kart 16 GB</td><td class="n">1</td><td>İşletim sistemi ve videolar</td><td class="n">4 $</td></tr>
+          <tr data-hl="ribbon"><td>16 pin IDC şerit kablo</td><td class="n">5</td><td>Veri zinciri</td><td class="n">panelle gelir</td></tr>
+          <tr data-hl="power"><td>WAGO 221 klemens + kablo<small>50 cm 14 AWG ana hat, 2 m 18 AWG kırmızı/siyah</small></td><td class="n">1 set</td><td>5 V'u panellere yıldız bağlantıyla dağıtır</td><td class="n">5 $</td></tr>
+          <tr data-hl="cap"><td>1000 µF 10 V kapasitör</td><td class="n">5</td><td>Her panelin güç girişinde ani akım düşüşünü yumuşatır</td><td class="n">2 $</td></tr>
+          <tr data-hl="psu"><td>IEC soket + anahtar + 3 A sigorta</td><td class="n">1</td><td>220 V girişi</td><td class="n">3 $</td></tr>
+          <tr data-hl="frame"><td>3 mm MDF (lazer kesim) ya da 3D baskı köşe parçaları<small>panellerin mıknatıslı vidaları kutuyla gelir</small></td><td class="n">1</td><td>Gövde ve elektronik kaidesi</td><td class="n">6 $</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="3">Toplam</td><td class="n">≈ 119 $</td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Yazılım kurulumu</h2>
+    <p class="lead">Sürücü olarak açık kaynak <span class="mono">hzeller/rpi-rgb-led-matrix</span> kullanılır. Komutlar simülasyondaki seçimlere göre güncellenir.</p>
+    <div class="steps">
+      <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">SD kartı hazırla</h3><p>Raspberry Pi Imager ile <b>Raspberry Pi OS Lite (64-bit)</b> yaz. Ayarlarda Wi-Fi ve SSH'ı aç.</p></div>
+      <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">Sürücüyü kur</h3>
+        <div class="code"><pre id="c1">sudo apt update && sudo apt install -y git ffmpeg libavcodec-dev libavformat-dev libswscale-dev libavdevice-dev
+git clone https://github.com/hzeller/rpi-rgb-led-matrix
+cd rpi-rgb-led-matrix && make -C utils video-viewer
+echo "dtparam=audio=off" | sudo tee -a /boot/firmware/config.txt
+sudo reboot</pre><button data-copy="c1">Kopyala</button></div>
+        <p>Pi'nin ses donanımı aynı zamanlayıcıyı kullandığı için kapatılır, yoksa panel titrer.</p></div>
+      <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">Videoyu küpe göre hazırla</h3>
+        <div class="code"><pre id="c2"></pre><button data-copy="c2">Kopyala</button></div>
+        <p>Seçili dağıtım modu: <b id="modeName">Kesintisiz açılım</b>. <span id="c2note"></span></p></div>
+      <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">Oynat</h3>
+        <div class="code"><pre id="c3"></pre><button data-copy="c3">Kopyala</button></div>
+        <p>Panel boş ya da karışık kalırsa sona <span class="mono">--led-panel-type=FM6126A</span> ekle. Bir yüz dönük görünüyorsa Test desenini aç ve o paneli fiziksel olarak çevir; oklar her yüzde simülasyondaki yöne bakmalı.</p></div>
+      <div class="step"><h3 style="color:var(--fg);text-transform:none;letter-spacing:0;font-size:16px">Açılışta otomatik başlat</h3>
+        <div class="code"><pre id="c4"></pre><button data-copy="c4">Kopyala</button></div>
+        <p><b>pi</b> yerine kendi kullanıcı adını yaz. Yeni video için <span class="mono">kup.mp4</span>'ü değiştirip <span class="mono">sudo systemctl restart kup</span> demen yeterli.</p></div>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const $ = s => document.querySelector(s);
+const V3 = THREE.Vector3;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- ölçüler (1 birim = 100 mm) ---------- */
+const H = 0.8;            // iç yarı genişlik: 160 mm panel
+const T = 0.13;           // panel kalınlığı 13 mm
+const S = 0.03;           // MDF 3 mm (görsel olarak kalın)
+const E = H + T + 0.005 + S;
+const PL = 0.5;           // kaide yüksekliği
+const FACES = [
+  {name:'Arka',  p00:[-H,-H,-H], p10:[ H,-H,-H], p01:[-H, H,-H]},
+  {name:'Sol',   p00:[-H,-H, H], p10:[-H,-H,-H], p01:[-H, H, H]},
+  {name:'Tavan', p00:[-H, H,-H], p10:[ H, H,-H], p01:[-H, H, H]},
+  {name:'Sağ',   p00:[ H,-H,-H], p10:[ H,-H, H], p01:[ H, H,-H]},
+  {name:'Zemin', p00:[-H,-H, H], p10:[ H,-H, H], p01:[-H,-H,-H]},
+];
+
+/* ---------- renderer ---------- */
+const vp = $('#vp');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'}); }
+catch(e){ $('#glfail').hidden = false; throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.domElement.className = 'gl';
+vp.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x06080a);
+scene.fog = new THREE.Fog(0x06080a, 9, 24);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 80);
+camera.position.set(2.75, 1.45, 3.75);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, -0.3, 0);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 1.6; controls.maxDistance = 12; controls.maxPolarAngle = Math.PI*0.62;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(512,512), 0.8, 0.55, 0.85);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+scene.add(new THREE.HemisphereLight(0xbfd4ff, 0x0a0a0a, 0.55));
+const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3,5,4); scene.add(key);
+const rim = new THREE.DirectionalLight(0x88aaff, 0.5); rim.position.set(-4,2,-3); scene.add(rim);
+const spill = new THREE.PointLight(0xffffff, 0, 0, 2); spill.position.set(0, 0, H+0.3); scene.add(spill);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.MeshStandardMaterial({color:0x0e1114, roughness:0.92}));
+floor.rotation.x = -Math.PI/2; floor.position.y = -E-PL; scene.add(floor);
+
+/* ---------- zincir çerçevesi (Pi'nin gönderdiği 320×64) ---------- */
+const chain = document.createElement('canvas'); chain.width = 320; chain.height = 64;
+const cctx = chain.getContext('2d', {willReadFrequently:true});
+const chainTex = new THREE.CanvasTexture(chain);
+chainTex.magFilter = chainTex.minFilter = THREE.NearestFilter;
+chainTex.generateMipmaps = false; chainTex.colorSpace = THREE.NoColorSpace;
+
+const U = { bright:{value:0.7}, bits:{value:8} };
+const ledVS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`;
+const ledFS = `
+uniform sampler2D chain; uniform float slot; uniform float bright; uniform float bits;
+varying vec2 vUv;
+void main(){
+  vec2 g = vUv*64.0;
+  vec2 cell = clamp(floor(g), 0.0, 63.0);
+  vec2 f = fract(g) - 0.5;
+  vec3 c = texture2D(chain, vec2((slot*64.0 + cell.x + 0.5)/320.0, (cell.y + 0.5)/64.0)).rgb;
+  float lv = exp2(bits) - 1.0;
+  c = floor(c*lv + 0.5)/lv;
+  c = pow(c, vec3(2.2))*bright;
+  float w = max(fwidth(g.x), fwidth(g.y));
+  float d = length(f);
+  float core = 1.0 - smoothstep(0.30 - w*0.7, 0.30 + w*0.7, d);
+  float far = smoothstep(0.35, 0.9, w);
+  float m = mix(core*2.4, 0.68, far);
+  float glow = exp(-d*d*9.0)*0.35*(1.0 - far);
+  vec3 col = c*(m + glow) + vec3(0.010,0.011,0.013)*(1.0 - core);
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+/* ---------- malzemeler ---------- */
+const std = (color, o={}) => new THREE.MeshStandardMaterial({color, roughness:0.6, metalness:0, ...o});
+const M = {
+  panelBack: std(0x15191d, {roughness:0.75}),
+  pcb: std(0x1b4a33, {roughness:0.55}),
+  conn: std(0x0b0b0c, {roughness:0.5}),
+  connW: std(0xe6e0cc, {roughness:0.5}),
+  cap: std(0x1d2b70, {roughness:0.35, metalness:0.2}),
+  shell: std(0x1e1c1b, {roughness:0.85, transparent:true}),
+  psu: std(0x9aa1a8, {roughness:0.38, metalness:0.75}),
+  term: std(0x161616),
+  pi: std(0x1f7a3a, {roughness:0.5}),
+  soc: std(0xb9bcc0, {roughness:0.3, metalness:0.8}),
+  hat: std(0x1c2a66, {roughness:0.5}),
+  sd: std(0x2a2f36),
+  ribbon: std(0x9aa3ad, {roughness:0.7}),
+  power: std(0xc8322a, {roughness:0.5}),
+};
+const HL = { panel:[M.panelBack, M.pcb], pi:[M.pi, M.sd], hat:[M.hat], psu:[M.psu, M.term], ribbon:[M.ribbon], power:[M.power], cap:[M.cap], frame:[M.shell] };
+function highlight(id, on){ (HL[id]||[]).forEach(m => { m.emissive.setHex(on ? 0x6a4510 : 0x000000); }); labelEls.forEach(l => l.el.classList.toggle('hot', on && l.id === id)); }
+const box = (w,h,d,mat) => new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+
+/* ---------- paneller ---------- */
+const panels = FACES.map((f, i) => {
+  const p00 = new V3(...f.p00), p10 = new V3(...f.p10), p01 = new V3(...f.p01);
+  const ax = p10.clone().sub(p00).normalize(), ay = p01.clone().sub(p00).normalize();
+  const az = new V3().crossVectors(ax, ay);
+  const g = new THREE.Group();
+  g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(ax, ay, az));
+  const center = p00.clone().addScaledVector(ax, H).addScaledVector(ay, H);
+  g.position.copy(center);
+  const mat = new THREE.ShaderMaterial({ uniforms:{ chain:{value:chainTex}, slot:{value:i}, bright:U.bright, bits:U.bits }, vertexShader:ledVS, fragmentShader:ledFS });
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(2*H, 2*H), mat); g.add(face);
+  const body = box(2*H-0.004, 2*H-0.004, T-0.012, M.panelBack); body.position.z = -T/2 - 0.003; g.add(body);
+  const pcb = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 1.36), M.pcb); pcb.rotation.y = Math.PI; pcb.position.z = -T - 0.001; g.add(pcb);
+  const zb = -T - 0.018;
+  const mk = (w,h,d,m,x,y) => { const b = box(w,h,d,m); b.position.set(x,y,zb); g.add(b); return b; };
+  mk(0.17,0.055,0.035,M.conn,-0.36,0.05); mk(0.17,0.055,0.035,M.conn,0.36,0.05);
+  mk(0.09,0.04,0.03,M.connW,0,-0.45);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.024,0.024,0.07,16), M.cap); cap.rotation.x = Math.PI/2; cap.position.set(0.14,-0.45,-T-0.035); g.add(cap);
+  scene.add(g);
+  return { g, face, body, center, az, name:f.name, inL:new V3(-0.36,0.05,zb-0.02), outL:new V3(0.36,0.05,zb-0.02), pwrL:new V3(0,-0.45,zb-0.02), backL:new V3(0,0.35,-T-0.05) };
+});
+
+/* ---------- gövde ve kaide ---------- */
+const shell = new THREE.Group(); scene.add(shell);
+const add = (m, x,y,z, parent=shell) => { m.position.set(x,y,z); parent.add(m); return m; };
+const zf = H + 0.012, depth = E + zf;
+add(box(2*E, 2*E, S, M.shell), 0, 0, -E + S/2);
+add(box(S, 2*E, depth, M.shell), -E + S/2, 0, (zf - E)/2);
+add(box(S, 2*E, depth, M.shell),  E - S/2, 0, (zf - E)/2);
+add(box(2*E, S, depth, M.shell), 0,  E - S/2, (zf - E)/2);
+add(box(2*E, S, depth, M.shell), 0, -E + S/2, (zf - E)/2);
+const bw = E - H;
+add(box(2*E, bw, S, M.shell), 0,  (E+H)/2, zf + S/2);
+add(box(2*E, bw, S, M.shell), 0, -(E+H)/2, zf + S/2);
+add(box(bw, 2*H, S, M.shell), -(E+H)/2, 0, zf + S/2);
+add(box(bw, 2*H, S, M.shell),  (E+H)/2, 0, zf + S/2);
+const PW = 2.4, PD = 2*E + 0.2;
+add(box(PW, PL, PD, M.shell), 0, -E - PL/2, 0);
+const statusLed = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 8), new THREE.MeshBasicMaterial({color:new THREE.Color(3,1.6,0.3)}));
+statusLed.position.set(0.95, -E - 0.22, PD/2 + 0.012); scene.add(statusLed);
+add(box(0.12,0.07,0.02,M.term), 1.05, -E - 0.22, PD/2 + 0.01, scene);
+
+/* elektronik (kaidenin içinde) */
+const elec = new THREE.Group(); scene.add(elec);
+const yb = -E - PL;
+const psu = add(box(1.99, 0.42, 0.98, M.psu), 0.12, yb + 0.24, -0.45, elec);
+add(box(0.62, 0.11, 0.06, M.term), 0.65, yb + 0.12, 0.07, elec);
+const pi = add(box(0.65, 0.014, 0.30, M.pi), -0.72, yb + 0.06, 0.62, elec);
+add(box(0.12, 0.012, 0.12, M.soc), -0.74, yb + 0.072, 0.62, elec);
+add(box(0.11, 0.008, 0.08, M.sd), -1.02, yb + 0.06, 0.62, elec);
+add(box(0.52, 0.07, 0.05, M.conn), -0.72, yb + 0.105, 0.5, elec);
+const hat = add(box(0.72, 0.016, 0.5, M.hat), -0.72, yb + 0.15, 0.62, elec);
+add(box(0.17, 0.055, 0.045, M.conn), -0.72, yb + 0.185, 0.47, elec);
+add(box(0.1, 0.05, 0.06, std(0x1d6b3c)), -0.45, yb + 0.18, 0.78, elec);
+const hatConn = new V3(-0.72, yb + 0.21, 0.47);
+const hatPwr = new V3(-0.45, yb + 0.21, 0.78);
+const psuTerm = new V3(0.65, yb + 0.18, 0.11);
+
+/* ---------- kablolar ---------- */
+const mkTube = mat => { const m = new THREE.Mesh(new THREE.BufferGeometry(), mat); scene.add(m); return m; };
+const dataTubes = panels.map(() => mkTube(M.ribbon));
+const powerTubes = panels.map(() => mkTube(M.power));
+const hatPowerTube = mkTube(M.power);
+const dataCurves = [], pulses = [];
+const pulseMat = new THREE.MeshBasicMaterial({color:new THREE.Color(0.55, 2.1, 3.0)});
+for (let k = 0; k < 15; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), pulseMat); scene.add(s); pulses.push(s); }
+
+const W = (p, l) => p.g.localToWorld(l.clone());
+const out = p => p.az.clone().negate();
+function curve(pts){ return new THREE.CatmullRomCurve3(pts, false, 'centripetal'); }
+function setTube(mesh, c, r){ mesh.geometry.dispose(); mesh.geometry = new THREE.TubeGeometry(c, 48, r, 6, false); }
+function rebuildCables(){
+  panels.forEach(p => p.g.updateMatrixWorld(true));
+  panels.forEach((p, k) => {
+    const b = W(p, p.inL);
+    let a, a2;
+    if (k === 0) { a = hatConn.clone(); a2 = a.clone().add(new V3(0, 0.3, -0.2)); }
+    else { const q = panels[k-1]; a = W(q, q.outL); a2 = a.clone().addScaledVector(out(q), 0.28); }
+    const c = curve([a, a2, b.clone().addScaledVector(out(p), 0.28), b]);
+    dataCurves[k] = c; setTube(dataTubes[k], c, 0.016);
+    const pw = W(p, p.pwrL);
+    const pc = curve([psuTerm.clone().add(new V3((k-2)*0.05, 0, 0)), psuTerm.clone().add(new V3((k-2)*0.08, 0.35, 0.1)), pw.clone().addScaledVector(out(p), 0.34), pw]);
+    setTube(powerTubes[k], pc, 0.009);
+  });
+  setTube(hatPowerTube, curve([psuTerm.clone().add(new V3(-0.25,0,0)), new V3(-0.1, yb + 0.3, 0.45), hatPwr]), 0.009);
+}
+
+/* ---------- etiketler ---------- */
+const labelsEl = $('#labels');
+const labelEls = [];
+function addLabel(id, text, get, badge=false){
+  const el = document.createElement('div'); el.className = 'lbl' + (badge ? ' badge' : ''); el.textContent = text; el.style.opacity = 0;
+  labelsEl.appendChild(el); labelEls.push({id, el, get});
+}
+addLabel('panel', 'P2.5 64×64 HUB75 panel ×5', () => W(panels[2], panels[2].backL).add(new V3(0, 0.12, 0)));
+addLabel('psu', '5 V 20 A güç kaynağı', () => psu.position.clone().add(new V3(0.5, 0.22, 0)));
+addLabel('pi', 'Raspberry Pi Zero 2 W', () => pi.position.clone().add(new V3(-0.2, 0.02, 0.15)));
+addLabel('hat', 'HUB75 sürücü kartı', () => hat.position.clone().add(new V3(0.2, 0.03, 0)));
+addLabel('ribbon', 'HUB75 şerit kablo (veri)', () => dataCurves[1] ? dataCurves[1].getPointAt(0.5) : new V3());
+addLabel('power', '5 V güç hattı', () => new V3(0.62, yb + 0.55, 0.3));
+addLabel('cap', '1000 µF kapasitör', () => W(panels[3], new V3(0.14,-0.45,-T-0.08)));
+panels.forEach((p, i) => addLabel('n'+i, `${i+1} · ${p.name}`, () => W(p, new V3(0, -0.05, -T-0.06)), true));
+
+/* ---------- kaynaklar ---------- */
+const netC = document.createElement('canvas'); netC.width = netC.height = 192; const nctx = netC.getContext('2d');
+const panoC = document.createElement('canvas'); panoC.width = 192; panoC.height = 64; const pnctx = panoC.getContext('2d');
+const oneC = document.createElement('canvas'); oneC.width = oneC.height = 64; const octx = oneC.getContext('2d');
+const preC = document.createElement('canvas'); const prctx = preC.getContext('2d');
+[cctx, nctx, pnctx, octx, prctx].forEach(c => { c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; });
+
+const DEMOS = {rings:'Halka dalgası', plasma:'Plazma', rain:'Dijital yağmur', test:'Test deseni', off:'Kapalı'};
+const glyphs = 'ｱｲｳｴｵｶｷｸｹｺ0123456789ABCDEF<>/*+';
+const TEST_HUES = [200, 30, 280, 140, 0];
+
+function drawCover(ctx, s, dx, dy, dw, dh){
+  const sc = Math.max(dw/s.w, dh/s.h), sw = dw/sc, sh = dh/sc, sx = (s.w - sw)/2, sy = (s.h - sh)/2;
+  if (s.w > dw*4 && s.h > dh*4) {
+    const pw = Math.min(dw*4, 768), ph = Math.round(pw*dh/dw);
+    if (preC.width !== pw || preC.height !== ph) { preC.width = pw; preC.height = ph; prctx.imageSmoothingQuality = 'high'; }
+    prctx.drawImage(s.img, sx, sy, sw, sh, 0, 0, pw, ph);
+    ctx.drawImage(preC, 0, 0, pw, ph, dx, dy, dw, dh);
+  } else ctx.drawImage(s.img, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+
+function drawTestTile(ctx, x, S, i, t){
+  const g = ctx.createLinearGradient(x, 0, x, S);
+  g.addColorStop(0, `hsl(${TEST_HUES[i]} 80% 38%)`); g.addColorStop(1, `hsl(${TEST_HUES[i]} 80% 12%)`);
+  ctx.fillStyle = g; ctx.fillRect(x, 0, S, S);
+  const k = S/64;
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = k; ctx.strokeRect(x + k/2, k/2, S - k, S - k);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.font = `bold ${26*k}px sans-serif`; ctx.fillText(String(i + 1), x + S/2, 42*k);
+  ctx.font = `bold ${9*k}px sans-serif`; ctx.fillText(FACES[i].name.toUpperCase(), x + S/2, 56*k);
+  ctx.beginPath(); ctx.moveTo(x + S/2, 3*k); ctx.lineTo(x + S/2 - 6*k, 11*k); ctx.lineTo(x + S/2 + 6*k, 11*k); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffb547'; ctx.fillRect(x + ((t*20*k) % S), S - 2*k, 3*k, 2*k);
+}
+function drawTest(t){ FACES.forEach((f, i) => drawTestTile(cctx, i*64, 64, i, t)); }
+
+class Src {
+  constructor(demo, idx, size){
+    this.demo = demo; this.idx = idx; this.size = size; this.media = null; this.name = '';
+    this.c = document.createElement('canvas'); this.c.width = this.c.height = size; this.x = this.c.getContext('2d');
+    const ps = size >= 192 ? 96 : 64; this.ps = ps;
+    this.pc = document.createElement('canvas'); this.pc.width = this.pc.height = ps; this.px = this.pc.getContext('2d'); this.pimg = this.px.createImageData(ps, ps);
+    this.cols = Math.round(size/8);
+    this.rain = Array.from({length:this.cols}, () => ({y: Math.random()*-size, v: 40 + Math.random()*70}));
+    this.ph = idx < 0 ? 0 : 3 + idx*4.7;
+    this.video = null; this.gif = null; this.still = null; this.url = null;
+  }
+  clear(){
+    if (this.video) { this.video.pause(); this.video.removeAttribute('src'); this.video.load(); }
+    if (this.gif) { try { this.gif.frame && this.gif.frame.close(); this.gif.dec.close(); } catch(e){} this.gif = null; }
+    this.still = null;
+    if (this.url) { URL.revokeObjectURL(this.url); this.url = null; }
+    this.media = null; this.name = '';
+  }
+  async load(file){
+    this.clear();
+    this.url = URL.createObjectURL(file); this.name = file.name;
+    if (file.type.startsWith('video/')) {
+      if (!this.video) { const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; this.video = v; }
+      this.video.src = this.url; this.media = 'video';
+      try { await this.video.play(); } catch(e) {}
+      return true;
+    }
+    if (file.type === 'image/gif' && 'ImageDecoder' in window) {
+      try {
+        const dec = new ImageDecoder({data: await file.arrayBuffer(), type: file.type});
+        await dec.tracks.ready; await dec.completed;
+        this.gif = {dec, count: dec.tracks.selectedTrack.frameCount || 1, idx:0, next:0, busy:false, frame:null};
+        this.media = 'gif'; return true;
+      } catch(e) {}
+    }
+    if (file.type.startsWith('image/')) { this.still = new Image(); this.still.src = this.url; this.media = 'img'; return true; }
+    this.clear(); return false;
+  }
+  pause(on){ if (this.media === 'video' && this.video) { if (on) this.video.pause(); else this.video.play().catch(()=>{}); } }
+  step(now){
+    const g = this.gif;
+    if (!g || g.busy || now < g.next) return;
+    g.busy = true;
+    g.dec.decode({frameIndex: g.idx}).then(r => {
+      if (this.gif !== g) { r.image.close(); return; }
+      if (g.frame) g.frame.close();
+      g.frame = r.image;
+      g.next = now + Math.max(20, (r.image.duration || 100000)/1000);
+      g.idx = (g.idx + 1) % g.count; g.busy = false;
+    }).catch(() => { g.idx = 0; g.busy = false; });
+  }
+  get(t, dt){
+    if (this.media === 'video') { const v = this.video; return v.readyState >= 2 ? {img:v, w:v.videoWidth, h:v.videoHeight} : null; }
+    if (this.media === 'gif') { const f = this.gif && this.gif.frame; return f ? {img:f, w:f.displayWidth, h:f.displayHeight} : null; }
+    if (this.media === 'img') { const s = this.still; return s && s.complete && s.naturalWidth ? {img:s, w:s.naturalWidth, h:s.naturalHeight} : null; }
+    return this.drawDemo(t + this.ph, dt);
+  }
+  drawDemo(t, dt){
+    const x = this.x, S = this.size, k = S/192, out = {img:this.c, w:S, h:S};
+    if (this.demo === 'off') { x.fillStyle = '#000'; x.fillRect(0, 0, S, S); return out; }
+    if (this.demo === 'test') { drawTestTile(x, 0, S, Math.max(0, this.idx), t); return out; }
+    if (this.demo === 'plasma') {
+      const P = this.ps, f = 96/P, c = P/2, d = this.pimg.data; let i = 0;
+      for (let y = 0; y < P; y++) for (let xx = 0; xx < P; xx++) {
+        const X = xx*f, Y = y*f;
+        const v = Math.sin(X*0.09 + t) + Math.sin(Y*0.07 - t*1.3) + Math.sin((X + Y)*0.05 + t*0.7) + Math.sin(Math.hypot(xx - c, y - c)*f*0.13 - t*2);
+        const a = v*Math.PI*0.5;
+        d[i++] = 128 + 127*Math.sin(a); d[i++] = 128 + 127*Math.sin(a + 2.09); d[i++] = 128 + 127*Math.sin(a + 4.19); d[i++] = 255;
+      }
+      this.px.putImageData(this.pimg, 0, 0);
+      return {img:this.pc, w:P, h:P};
+    }
+    if (this.demo === 'rain') {
+      x.fillStyle = 'rgba(0,0,0,0.16)'; x.fillRect(0, 0, S, S);
+      x.font = 'bold 11px monospace'; x.textAlign = 'center';
+      this.rain.forEach((r, i) => {
+        r.y += r.v*dt;
+        if (r.y > S + 38) { r.y = -Math.random()*80; r.v = 40 + Math.random()*70; }
+        x.fillStyle = '#d9fbff'; x.fillText(glyphs[(Math.random()*glyphs.length)|0], i*8 + 4, r.y);
+        x.fillStyle = 'rgba(60,200,255,0.9)'; x.fillText(glyphs[(Math.random()*glyphs.length)|0], i*8 + 4, r.y - 11);
+      });
+      return out;
+    }
+    x.fillStyle = '#000'; x.fillRect(0, 0, S, S);
+    for (let n = 0; n < 9; n++) {
+      const r = ((t*38 + n*24) % 216)*k;
+      x.strokeStyle = `hsl(${(n*41 + t*25) % 360} 95% ${45 + 10*Math.sin(t + n)}%)`;
+      x.lineWidth = (9 + 4*Math.sin(t*2 + n))*k;
+      x.beginPath(); x.arc(S/2, S/2, r, 0, Math.PI*2); x.stroke();
+    }
+    return out;
+  }
+}
+
+const state = { mode:'net' };
+const globalSrc = new Src('rings', -1, 192);
+const PANEL_DEFAULT = ['rings', 'plasma', 'rain', 'test', 'rings'];
+const panelSrc = FACES.map((f, i) => new Src(PANEL_DEFAULT[i], i, 64));
+
+function compose(t, dt, now){
+  if (state.mode === 'sep') {
+    panelSrc.forEach((s, i) => {
+      s.step(now);
+      const r = s.get(t, dt);
+      if (r && r.w) { drawCover(octx, r, 0, 0, 64, 64); cctx.drawImage(oneC, i*64, 0); }
+    });
+    return;
+  }
+  globalSrc.step(now);
+  if (!globalSrc.media && globalSrc.demo === 'test') { drawTest(t); return; }
+  const s = globalSrc.get(t, dt); if (!s || !s.w) return;
+  if (state.mode === 'same') {
+    drawCover(octx, s, 0, 0, 64, 64);
+    for (let i = 0; i < 5; i++) cctx.drawImage(oneC, i*64, 0);
+  } else if (state.mode === 'net') {
+    drawCover(nctx, s, 0, 0, 192, 192);
+    [[64,64],[0,64],[64,0],[128,64],[64,128]].forEach(([x,y], i) => cctx.drawImage(netC, x, y, 64, 64, i*64, 0, 64, 64));
+  } else {
+    drawCover(pnctx, s, 0, 0, 192, 64);
+    cctx.drawImage(panoC, 64, 0, 64, 64, 0, 0, 64, 64);
+    cctx.drawImage(panoC, 0, 0, 64, 64, 64, 0, 64, 64);
+    cctx.drawImage(panoC, 128, 0, 64, 64, 192, 0, 64, 64);
+    [[0, 128], [58, 256]].forEach(([sy, dx]) => {
+      octx.save(); octx.filter = 'blur(5px)'; octx.drawImage(panoC, 0, sy, 192, 6, -8, -8, 80, 80); octx.restore();
+      cctx.drawImage(oneC, dx, 0);
+    });
+  }
+}
+
+/* ---------- ölçüm modelleri ---------- */
+const LIN = new Float32Array(256); for (let i = 0; i < 256; i++) LIN[i] = Math.pow(i/255, 2.2);
+const panelAmps = [0,0,0,0,0];
+let avgCol = [0,0,0];
+function measure(){
+  const d = cctx.getImageData(0, 0, 320, 64).data;
+  const sums = [0,0,0,0,0]; let r = 0, g = 0, b = 0;
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 320; x++) {
+    const i = (y*320 + x)*4, lr = LIN[d[i]], lg = LIN[d[i+1]], lb = LIN[d[i+2]];
+    sums[(x/64)|0] += (lr + lg + lb)/3; r += lr; g += lg; b += lb;
+  }
+  const br = U.bright.value;
+  for (let k = 0; k < 5; k++) panelAmps[k] = 0.12 + 3.9*(sums[k]/4096)*br;
+  const n = 320*64; avgCol = [r/n*br, g/n*br, b/n*br];
+}
+function refreshHz(bits){
+  const shiftUs = 320*0.015*3, lsbUs = 0.13;
+  const row = bits*(shiftUs + 1) + lsbUs*(Math.pow(2, bits) - 1);
+  return 1e6/(32*row);
+}
+
+/* ---------- UI ---------- */
+const pbars = $('#pbars');
+FACES.forEach((f, i) => { pbars.insertAdjacentHTML('beforeend', `<div class="pb"><div class="v"><div id="pbv${i}"></div></div><em id="pbt${i}">–</em><span>${i+1} ${f.name}</span></div>`); });
+const wp = $('#wpanels');
+FACES.forEach((f, i) => {
+  const x = 380 + i*92, cx = x + 38;
+  wp.insertAdjacentHTML('beforeend',
+    `<path class="w-pow" d="M${cx} 60 V118"/><circle class="w-dot" cx="${cx}" cy="60" r="3.5"/>
+     <rect class="w-panel" x="${x}" y="118" width="76" height="76" rx="4"/>
+     <text class="w-n" x="${cx}" y="152" text-anchor="middle">${i+1}</text>
+     <text class="w-t" x="${cx}" y="170" text-anchor="middle" style="font-size:12px">${f.name}</text>
+     <text class="w-s" x="${cx}" y="186" text-anchor="middle">64×64</text>` +
+    (i < 4 ? `<path class="w-data" d="M${x+76} 156 H${x+90}" marker-end="url(#ar)"/>` : ''));
+});
+
+const FF = {
+  net: 'scale=192:192:force_original_aspect_ratio=increase,crop=192:192,split=5[s0][s1][s2][s3][s4];[s0]crop=64:64:64:64[f0];[s1]crop=64:64:0:64[f1];[s2]crop=64:64:64:0[f2];[s3]crop=64:64:128:64[f3];[s4]crop=64:64:64:128[f4];[f0][f1][f2][f3][f4]hstack=inputs=5',
+  same: 'scale=64:64:force_original_aspect_ratio=increase,crop=64:64,split=5[a][b][c][d][e];[a][b][c][d][e]hstack=inputs=5',
+  pano: 'scale=192:64:force_original_aspect_ratio=increase,crop=192:64,split=5[s0][s1][s2][s3][s4];[s0]crop=64:64:64:0[f0];[s1]crop=64:64:0:0[f1];[s2]crop=192:6:0:0,scale=64:64,gblur=sigma=5[f2];[s3]crop=64:64:128:0[f3];[s4]crop=192:6:0:58,scale=64:64,gblur=sigma=5[f4];[f0][f1][f2][f3][f4]hstack=inputs=5',
+};
+const MODE_NAMES = {net:'Kesintisiz açılım', same:'Her yüzde aynı', pano:'Panorama', sep:'Her panele ayrı'};
+const DEF_NAMES = ['arka', 'sol', 'tavan', 'sag', 'zemin'];
+function updateCommands(){
+  const bits = U.bits.value, pct = Math.round(U.bright.value*100);
+  const flags = `--led-rows=64 --led-cols=64 --led-chain=5 --led-gpio-mapping=regular --led-slowdown-gpio=2 --led-pwm-bits=${bits} --led-brightness=${pct}`;
+  if (state.mode === 'sep') {
+    const ins = panelSrc.map((s, i) => `-stream_loop -1 -i "${s.media ? s.name : DEF_NAMES[i] + '.mp4'}"`).join(' ');
+    const fc = panelSrc.map((s, i) => `[${i}:v]scale=64:64:force_original_aspect_ratio=increase,crop=64:64,setsar=1,fps=30[f${i}]`).join(';') + ';[f0][f1][f2][f3][f4]hstack=inputs=5';
+    $('#c2').textContent = `ffmpeg ${ins} -filter_complex "${fc}" -t 60 -an -c:v libx264 -crf 14 -pix_fmt yuv420p kup.mp4`;
+    $('#c2note').textContent = 'Beş dosya beş ayrı giriş olur, sıra zincirle aynı: 1 Arka, 2 Sol, 3 Tavan, 4 Sağ, 5 Zemin. Yüklediğin dosyaların adları komuta kendiliğinden yazılır. Kısa olan başa sarar; -t 60 ile 60 saniyelik bir döngü çıkar, bu süreyi değiştirebilirsin. Çıktı yine tek bir 320×64 kup.mp4.';
+  } else {
+    $('#c2').textContent = `ffmpeg -i girdi.mp4 -filter_complex "${FF[state.mode]}" -an -r 30 -c:v libx264 -crf 14 -pix_fmt yuv420p kup.mp4`;
+    $('#c2note').textContent = 'GIF için girişi girdi.gif yapman yeterli. Çıktı 320×64 boyutunda kup.mp4.';
+  }
+  $('#c3').textContent = `sudo ./utils/video-viewer ${flags} -f kup.mp4`;
+  $('#c4').textContent = `sudo tee /etc/systemd/system/kup.service >/dev/null <<'EOF'
+[Unit]
+Description=LED kup
+After=multi-user.target
+
+[Service]
+ExecStart=/home/pi/rpi-rgb-led-matrix/utils/video-viewer ${flags} -f /home/pi/kup.mp4
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl enable --now kup`;
+  $('#modeName').textContent = MODE_NAMES[state.mode];
+}
+
+/* tek kaynak (ilk üç mod) */
+async function loadGlobal(file){
+  document.querySelectorAll('#demos .btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  const ok = await globalSrc.load(file);
+  $('#mediaName').textContent = ok ? file.name : 'Bu dosya türü açılamadı. MP4, WebM, GIF, PNG veya JPG dene.';
+  $('#pp').hidden = globalSrc.media !== 'video'; $('#pp').textContent = 'Duraklat';
+}
+$('#demos').addEventListener('click', e => {
+  const b = e.target.closest('[data-demo]'); if (!b) return;
+  globalSrc.clear(); globalSrc.demo = b.dataset.demo; $('#pp').hidden = true;
+  document.querySelectorAll('#demos .btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $('#mediaName').textContent = globalSrc.demo === 'test' ? 'Test deseni: her panel numarası ve yukarı oku' : 'Demo içerik oynuyor';
+});
+$('#pp').addEventListener('click', () => {
+  const v = globalSrc.video; if (!v) return;
+  if (v.paused) { v.play().catch(()=>{}); $('#pp').textContent = 'Duraklat'; }
+  else { v.pause(); $('#pp').textContent = 'Oynat'; }
+});
+
+/* panel başına kaynak */
+const prows = $('#prows');
+const demoOpts = Object.entries(DEMOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+FACES.forEach((f, i) => {
+  prows.insertAdjacentHTML('beforeend',
+    `<div class="prow" id="pr${i}"><b>${i+1}</b><span>${f.name}</span>
+      <select id="ps${i}" aria-label="${f.name} paneli içeriği"><option value="file" hidden>Dosya</option>${demoOpts}</select>
+      <label for="pf${i}" class="btn">Dosya</label><input type="file" id="pf${i}" accept="video/*,image/gif,image/png,image/jpeg,image/webp" hidden>
+      <p class="media-name" id="pn${i}"></p></div>`);
+});
+function syncRow(i, msg){
+  const s = panelSrc[i];
+  $('#ps' + i).value = s.media ? 'file' : s.demo;
+  $('#pn' + i).textContent = msg || (s.media ? s.name : 'Demo: ' + DEMOS[s.demo]);
+}
+async function loadPanel(i, file){
+  $('#pn' + i).textContent = 'Yükleniyor…';
+  const ok = await panelSrc[i].load(file);
+  if (state.mode !== 'sep') panelSrc[i].pause(true);
+  syncRow(i, ok ? null : 'Açılamadı. MP4, WebM, GIF, PNG veya JPG dene.');
+  updateCommands();
+}
+FACES.forEach((f, i) => {
+  syncRow(i);
+  $('#ps' + i).addEventListener('change', e => { const s = panelSrc[i]; s.clear(); s.demo = e.target.value; syncRow(i); updateCommands(); });
+  $('#pf' + i).addEventListener('change', e => { if (e.target.files[0]) loadPanel(i, e.target.files[0]); e.target.value = ''; });
+});
+
+function setMode(m){
+  state.mode = m;
+  document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.mode === m)));
+  $('#gContent').hidden = m === 'sep';
+  $('#gPanels').hidden = m !== 'sep';
+  panelSrc.forEach(s => s.pause(m !== 'sep'));
+  globalSrc.pause(m === 'sep');
+  if (globalSrc.video) $('#pp').textContent = globalSrc.video.paused ? 'Oynat' : 'Duraklat';
+  updateCommands();
+}
+$('#modes').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
+
+function handleFiles(list, start = 0){
+  const files = [...list].filter(Boolean); if (!files.length) return;
+  if (files.length > 1) { setMode('sep'); files.slice(0, 5).forEach((f, k) => loadPanel((start + k) % 5, f)); }
+  else if (state.mode === 'sep') loadPanel(start, files[0]);
+  else loadGlobal(files[0]);
+}
+$('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+$('#bright').addEventListener('input', e => { U.bright.value = e.target.value/100; $('#brightO').textContent = e.target.value + ' %'; updateCommands(); });
+$('#bits').addEventListener('input', e => { U.bits.value = +e.target.value; $('#bitsO').textContent = e.target.value + ' bit'; updateCommands(); });
+$('#bloom').addEventListener('change', e => { bloom.enabled = e.target.checked; });
+
+/* sahnede panel seçme: sürükle-bırak ve çift tık */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const pickList = [...panels.map(p => p.face), ...panels.map(p => p.body), ...shell.children];
+function panelAt(cx, cy){
+  const r = vp.getBoundingClientRect();
+  ndc.set((cx - r.left)/r.width*2 - 1, -((cy - r.top)/r.height)*2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(pickList, false)[0];
+  return hit ? panels.findIndex(p => p.face === hit.object) : -1;
+}
+function markRow(i){ FACES.forEach((f, k) => $('#pr' + k).classList.toggle('on', k === i)); }
+let dragDepth = 0;
+vp.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; $('#drop').hidden = false; });
+vp.addEventListener('dragover', e => {
+  e.preventDefault();
+  if (state.mode !== 'sep') { $('#drop').textContent = 'Bırak, küpte oynasın'; return; }
+  const i = panelAt(e.clientX, e.clientY); markRow(i);
+  $('#drop').textContent = i >= 0 ? `${i+1} · ${FACES[i].name} paneline bırak` : 'Bir panelin üstüne getir';
+});
+vp.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#drop').hidden = true; markRow(-1); } });
+vp.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; $('#drop').hidden = true; markRow(-1);
+  const files = e.dataTransfer.files, i = panelAt(e.clientX, e.clientY);
+  if (files.length > 1) handleFiles(files, Math.max(0, i));
+  else if (state.mode === 'sep') { if (i >= 0) loadPanel(i, files[0]); }
+  else handleFiles(files);
+});
+renderer.domElement.addEventListener('dblclick', e => {
+  const i = panelAt(e.clientX, e.clientY); if (i < 0) return;
+  if (state.mode !== 'sep') setMode('sep');
+  $('#pf' + i).click();
+});
+
+document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+  const pre = document.getElementById(b.dataset.copy);
+  const done = () => { b.textContent = 'Kopyalandı'; setTimeout(() => b.textContent = 'Kopyala', 1400); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Seçildi, Ctrl+C'; setTimeout(() => b.textContent = 'Kopyala', 2000); };
+  try { navigator.clipboard.writeText(pre.textContent).then(done, fallback); } catch(e) { fallback(); }
+}));
+document.querySelectorAll('tbody tr[data-hl]').forEach(tr => {
+  tr.addEventListener('mouseenter', () => highlight(tr.dataset.hl, true));
+  tr.addEventListener('mouseleave', () => highlight(tr.dataset.hl, false));
+});
+
+/* ---------- görünümler ---------- */
+const VIEWS = {
+  out:  {pos:[2.75,1.45,3.75], tgt:[0,-0.3,0],   fov:40, ex:0, min:1.6,  max:12,  polar:0.62},
+  elec: {pos:[4.3,2.6,4.6],    tgt:[0,-0.55,-0.1],fov:40, ex:1, min:1.6,  max:14,  polar:0.62},
+  in:   {pos:[0,0.02,0.32],    tgt:[0,0,0],       fov:80, ex:0, min:0.05, max:0.55,polar:1},
+};
+let tween = null, exTarget = 0, ex = 0, lastEx = -1;
+function setView(name){
+  const v = VIEWS[name]; exTarget = v.ex;
+  ['out','elec','in'].forEach(n => $('#v' + n[0].toUpperCase() + n.slice(1)).setAttribute('aria-pressed', String(n === name)));
+  controls.minDistance = 0; controls.maxDistance = 100; controls.maxPolarAngle = Math.PI;
+  tween = {t:0, dur: reduceMotion ? 0.001 : 1.1, p0:camera.position.clone(), t0:controls.target.clone(), f0:camera.fov, p1:new V3(...v.pos), t1:new V3(...v.tgt), f1:v.fov, v};
+  if (reduceMotion) ex = exTarget;
+}
+$('#vOut').onclick = () => setView('out');
+$('#vElec').onclick = () => setView('elec');
+$('#vIn').onclick = () => setView('in');
+
+new ResizeObserver(() => {
+  const w = vp.clientWidth, h = vp.clientHeight;
+  renderer.setSize(w, h, false); composer.setSize(w, h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}).observe(vp);
+
+/* ---------- döngü ---------- */
+const strip = $('#strip').getContext('2d'); strip.imageSmoothingEnabled = false;
+const clock = new THREE.Clock();
+let t = 0, frame = 0, fps = 60, lastUi = 0;
+const tmp = new V3();
+updateCommands();
+
+function loop(){
+  const dt = Math.min(clock.getDelta(), 0.1); t += dt; frame++;
+  fps += ((1/Math.max(dt, 1e-3)) - fps)*0.05;
+  const now = performance.now();
+  compose(t, dt, now);
+  chainTex.needsUpdate = true;
+  strip.drawImage(chain, 0, 0);
+  if (frame % 4 === 0) measure();
+
+  // görünüm geçişi
+  if (tween) {
+    tween.t = Math.min(1, tween.t + dt/tween.dur);
+    const k = tween.t < 0.5 ? 4*tween.t**3 : 1 - Math.pow(-2*tween.t + 2, 3)/2;
+    camera.position.lerpVectors(tween.p0, tween.p1, k);
+    controls.target.lerpVectors(tween.t0, tween.t1, k);
+    camera.fov = tween.f0 + (tween.f1 - tween.f0)*k; camera.updateProjectionMatrix();
+    controls.enabled = false;
+    if (tween.t >= 1) { const v = tween.v; controls.minDistance = v.min; controls.maxDistance = v.max; controls.maxPolarAngle = Math.PI*v.polar; controls.enabled = true; tween = null; }
+  }
+  ex += (exTarget - ex)*Math.min(1, dt*3.2);
+  if (Math.abs(ex - exTarget) < 1e-4) ex = exTarget;
+  if (Math.abs(ex - lastEx) > 1e-4) {
+    panels.forEach(p => p.g.position.copy(p.center).addScaledVector(p.az, -ex*0.62));
+    M.shell.opacity = 1 - ex*0.86; M.shell.depthWrite = M.shell.opacity > 0.98;
+    rebuildCables(); lastEx = ex;
+  }
+  const showCables = ex > 0.04;
+  [...dataTubes, ...powerTubes, hatPowerTube].forEach(m => m.visible = showCables);
+  pulses.forEach((s, j) => {
+    s.visible = showCables;
+    if (!showCables) return;
+    const k = (j/3)|0, ph = ((t*0.55 - k*0.2 + (j%3)/3) % 1 + 1) % 1;
+    s.position.copy(dataCurves[k].getPointAt(ph));
+  });
+
+  // içerden dışarı taşan ışık
+  const lum = (avgCol[0] + avgCol[1] + avgCol[2])/3;
+  if (lum > 1e-4) spill.color.setRGB(avgCol[0]/lum, avgCol[1]/lum, avgCol[2]/lum).multiplyScalar(0.33);
+  spill.intensity = Math.min(12, lum*22);
+  statusLed.material.color.setRGB(3, 1.6, 0.3).multiplyScalar(0.6 + 0.4*Math.sin(t*3));
+
+  controls.update();
+
+  // etiketler
+  const w = vp.clientWidth, h = vp.clientHeight, lop = Math.max(0, Math.min(1, (ex - 0.55)/0.4));
+  labelEls.forEach(l => {
+    if (lop <= 0) { l.el.style.opacity = 0; return; }
+    tmp.copy(l.get()).project(camera);
+    if (tmp.z > 1) { l.el.style.opacity = 0; return; }
+    l.el.style.left = ((tmp.x + 1)/2*w).toFixed(1) + 'px';
+    l.el.style.top = ((1 - tmp.y)/2*h - (l.el.classList.contains('badge') ? 0 : 10)).toFixed(1) + 'px';
+    l.el.style.opacity = lop;
+  });
+
+  if (now - lastUi > 250) { lastUi = now; updateReadouts(); }
+  composer.render();
+  requestAnimationFrame(loop);
+}
+
+function updateReadouts(){
+  const panelsA = panelAmps.reduce((a, b) => a + b, 0), total = panelsA + 0.35, watts = total*5;
+  const pct = total/20*100, hz = refreshHz(U.bits.value);
+  $('#pA').innerHTML = `<i>akım</i>${total.toFixed(1)} A`;
+  $('#pW').innerHTML = `<i>güç</i>${watts.toFixed(0)} W`;
+  $('#pHz').innerHTML = `<i>tazeleme</i>≈${hz.toFixed(0)} Hz`;
+  $('#pHz').classList.toggle('warn', hz < 100);
+  $('#pFps').innerHTML = `<i>sim</i>${fps.toFixed(0)} fps`;
+  $('#mA').textContent = total.toFixed(2);
+  $('#mW').textContent = watts.toFixed(0) + ' W';
+  $('#psuBar').firstElementChild.style.width = Math.min(100, pct).toFixed(1) + '%';
+  $('#psuBar').classList.toggle('hot', pct > 85);
+  $('#psuTxt').textContent = pct > 85
+    ? `20 A kaynağın %${pct.toFixed(0)}'i kullanılıyor. Parlaklığı düşür.`
+    : `20 A güç kaynağının %${pct.toFixed(0)}'i kullanılıyor (Pi dahil). Tazeleme ${hz < 100 ? 'düşük, kamerada titrer' : 'titreşimsiz'}.`;
+  panelAmps.forEach((a, i) => { $('#pbv' + i).style.height = Math.min(100, a/4*100).toFixed(0) + '%'; $('#pbt' + i).textContent = a.toFixed(1) + ' A'; });
+}
+
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
