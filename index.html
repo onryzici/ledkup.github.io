@@ -112,7 +112,7 @@ h1 em{font-style:normal;color:var(--accent);text-shadow:0 0 28px rgba(255,181,71
 .views button{font:500 13.5px var(--f-body);color:var(--fg2);background:transparent;border:0;border-radius:7px;padding:8px 14px;cursor:pointer;transition:background .15s,color .15s}
 .views button:hover{color:var(--fg);background:var(--surface3)}
 .views button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
-@media (max-width:420px){.views button{padding:7px 10px;font-size:13px}}
+@media (max-width:520px){.views{right:18px;flex-wrap:wrap}.views button{padding:7px 9px;font-size:12.5px;flex:1 1 auto}}
 .labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lbl{position:absolute;transform:translate(-50%,-100%);font:500 12px var(--f-mono);white-space:nowrap;padding:4px 8px;border-radius:6px;background:rgba(8,10,13,.9);border:1px solid var(--line2);color:var(--fg);transition:opacity .2s}
 .lbl::after{content:"";position:absolute;left:var(--tip,50%);top:100%;width:1px;height:10px;background:var(--muted)}
@@ -147,6 +147,8 @@ kbd{font:500 11.5px var(--f-mono);color:var(--fg2);background:var(--surface2);bo
 .sw-rings{background:repeating-radial-gradient(circle at 50% 60%,#ff3d7f 0 5px,#000 5px 9px,#ff8a1f 9px 14px,#000 14px 18px,#7a4dff 18px 23px,#000 23px 27px)}
 .sw-plasma{background:linear-gradient(115deg,#ff4f6d,#ffb13b 30%,#3bd1ff 58%,#8a5bff 80%,#ff4f6d)}
 .sw-rain{background:repeating-linear-gradient(90deg,#000 0 6px,#0b3a4a 6px 8px,#000 8px 15px,#33c8ff 15px 16px,#000 16px 22px),#000}
+.sw-tunnel{background:#000;box-shadow:inset 0 0 0 5px #000,inset 0 0 0 7px #ff4f9a,inset 0 0 0 12px #000,inset 0 0 0 14px #b04dff,inset 0 0 0 18px #000,inset 0 0 0 20px #2bd0ff}
+.sw-aurora{background:linear-gradient(180deg,#02040a 12%,#0d4f40 40%,#3dffb0 52%,#6a35b8 72%,#02040a)}
 .sw-test{background:linear-gradient(90deg,hsl(200 80% 32%) 0 20%,hsl(30 80% 34%) 20% 40%,hsl(280 80% 34%) 40% 60%,hsl(140 80% 28%) 60% 80%,hsl(0 80% 34%) 80%)}
 .upload{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:2px 12px;padding:12px 14px;border:1px dashed var(--accent-line);border-radius:var(--r-md);background:var(--accent-soft);cursor:pointer;transition:background .15s,border-color .15s}
 .upload:hover{background:rgba(255,181,71,.17);border-color:var(--accent)}
@@ -426,6 +428,8 @@ footer.foot a:hover{color:var(--accent)}
               <button id="vOut" aria-pressed="true">Dıştan</button>
               <button id="vElec" aria-pressed="false">Elektronik</button>
               <button id="vIn" aria-pressed="false">İçeriden</button>
+              <button id="vGal" aria-pressed="false">Galeri</button>
+              <button id="vEye" aria-pressed="false">Gözler</button>
             </div>
             <div class="drop" id="drop" hidden>Bırak, küpte oynasın</div>
             <div class="glfail" id="glfail" hidden>Bu tarayıcı WebGL açamadı. Chrome veya Edge ile tekrar dene.</div>
@@ -445,6 +449,8 @@ footer.foot a:hover{color:var(--accent)}
               <button class="demo" data-demo="rings" aria-pressed="true"><i class="sw sw-rings"></i><span>Halka dalgası</span></button>
               <button class="demo" data-demo="plasma" aria-pressed="false"><i class="sw sw-plasma"></i><span>Plazma</span></button>
               <button class="demo" data-demo="rain" aria-pressed="false"><i class="sw sw-rain"></i><span>Dijital yağmur</span></button>
+              <button class="demo" data-demo="tunnel" aria-pressed="false"><i class="sw sw-tunnel"></i><span>Sonsuz koridor</span></button>
+              <button class="demo" data-demo="aurora" aria-pressed="false"><i class="sw sw-aurora"></i><span>Kuzey ışığı</span></button>
               <button class="demo" data-demo="test" aria-pressed="false"><i class="sw sw-test"></i><span>Test deseni</span></button>
             </div>
             <label for="file" class="upload">
@@ -742,6 +748,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
 
 const $ = s => document.querySelector(s);
 const V3 = THREE.Vector3;
@@ -892,7 +899,7 @@ const PW = 2.4, PD = 2*E + 0.2;
 add(box(PW, PL, PD, M.shell), 0, -E - PL/2, 0);
 const statusLed = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 8), new THREE.MeshBasicMaterial({color:new THREE.Color(3,1.6,0.3)}));
 statusLed.position.set(0.95, -E - 0.22, PD/2 + 0.012); scene.add(statusLed);
-add(box(0.12,0.07,0.02,M.term), 1.05, -E - 0.22, PD/2 + 0.01, scene);
+const termBox = add(box(0.12,0.07,0.02,M.term), 1.05, -E - 0.22, PD/2 + 0.01, scene);
 
 /* elektronik (kaidenin içinde) */
 const elec = new THREE.Group(); scene.add(elec);
@@ -970,7 +977,7 @@ const oneC = document.createElement('canvas'); oneC.width = oneC.height = 64; co
 const preC = document.createElement('canvas'); const prctx = preC.getContext('2d');
 [cctx, nctx, pnctx, octx, prctx].forEach(c => { c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; });
 
-const DEMOS = {rings:'Halka dalgası', plasma:'Plazma', rain:'Dijital yağmur', test:'Test deseni', off:'Kapalı'};
+const DEMOS = {rings:'Halka dalgası', plasma:'Plazma', rain:'Dijital yağmur', tunnel:'Sonsuz koridor', aurora:'Kuzey ışığı', test:'Test deseni', off:'Kapalı'};
 const glyphs = 'ｱｲｳｴｵｶｷｸｹｺ0123456789ABCDEF<>/*+';
 const TEST_HUES = [200, 30, 280, 140, 0];
 
@@ -1081,6 +1088,32 @@ class Src {
       });
       return out;
     }
+    if (this.demo === 'tunnel') {
+      // kare halkalar açılımın merkezinden (arka yüz) dışa akar; küpün içinde sonsuz bir koridor gibi görünür
+      x.fillStyle = '#000'; x.fillRect(0, 0, S, S);
+      for (let n = 0; n < 12; n++) {
+        const p = (t*0.22 + n/12) % 1, r = (3 + Math.pow(p, 2.4)*112)*k;
+        x.strokeStyle = `hsl(${(200 + n*30 + t*18) % 360} 95% ${26 + 44*p}%)`;
+        x.lineWidth = (1.5 + 7*p)*k;
+        x.strokeRect(S/2 - r, S/2 - r, 2*r, 2*r);
+      }
+      return out;
+    }
+    if (this.demo === 'aurora') {
+      x.fillStyle = 'rgba(1,3,8,0.22)'; x.fillRect(0, 0, S, S);
+      x.globalCompositeOperation = 'lighter';
+      for (let b = 0; b < 5; b++) {
+        const hue = [150, 172, 118, 285, 200][b], yb = S*(0.24 + 0.13*b);
+        for (let xx = 0; xx < S; xx += 3*k) {
+          const y = yb + Math.sin(xx*0.025/k + t*(0.5 + b*0.17) + b*1.7)*16*k + Math.sin(xx*0.009/k - t*0.3 + b)*22*k;
+          const h = (20 + 18*Math.sin(xx*0.05/k + t*1.3 + b*2))*k;
+          x.fillStyle = `hsla(${hue} 90% 55% / 0.10)`; x.fillRect(xx, y - h, 3*k, h);
+          x.fillStyle = `hsla(${hue} 95% 66% / 0.32)`; x.fillRect(xx, y - 3*k, 3*k, 4*k);
+        }
+      }
+      x.globalCompositeOperation = 'source-over';
+      return out;
+    }
     x.fillStyle = '#000'; x.fillRect(0, 0, S, S);
     for (let n = 0; n < 9; n++) {
       const r = ((t*38 + n*24) % 216)*k;
@@ -1096,6 +1129,224 @@ const state = { mode:'net' };
 const globalSrc = new Src('rings', -1, 192);
 const PANEL_DEFAULT = ['rings', 'plasma', 'rain', 'test', 'rings'];
 const panelSrc = FACES.map((f, i) => new Src(PANEL_DEFAULT[i], i, 64));
+
+/* ---------- galeri: iki salon, beşer küp ---------- */
+const GY = -E - PL;                 // zemin yüksekliği
+const EYE_X = 22;                   // göz salonunun merkezi
+const EYE_URL = 'goz.mp4';
+const gallery = new THREE.Group(); gallery.visible = false; scene.add(gallery);
+const GM = {
+  shell: std(0x141518, {roughness:0.7, metalness:0.15}),
+  plinth: std(0x2b2c30, {roughness:0.93}),
+  wire: new THREE.MeshBasicMaterial({color:0x30353c}),
+};
+const mirror = new Reflector(new THREE.PlaneGeometry(96, 60), {clipBias:0.003, textureWidth:1024, textureHeight:1024, color:0x8c8c8c});
+mirror.rotation.x = -Math.PI/2; mirror.position.set(EYE_X/2, GY, 0); gallery.add(mirror);
+const gloss = new THREE.Mesh(new THREE.PlaneGeometry(96, 60), new THREE.MeshStandardMaterial({color:0x0a0b0d, roughness:0.5, metalness:0.1, transparent:true, opacity:0.74, depthWrite:false}));
+gloss.rotation.x = -Math.PI/2; gloss.position.set(EYE_X/2, GY + 0.004, 0); gallery.add(gloss);
+
+const GAL = [
+  {demo:'aurora', no:'01', title:'Kuzey Işığı',     sub:'Beş yüze yayılan perdeler', x:-4.3,  z:-0.8, ry: 0.6,  base:0.85},
+  {demo:'plasma', no:'02', title:'Plazma',          sub:'Dört sinüs alanı',          x:-2.15, z:-2.7, ry: 0.25, base:1.55},
+  {demo:'tunnel', no:'03', title:'Sonsuz Koridor',  sub:'Askıda, yavaşça döner',     x: 0,    z: 0.3, ry: 0,    base:-1},
+  {demo:'rain',   no:'04', title:'Dijital Yağmur',  sub:'Akan glifler',              x: 2.15, z:-2.7, ry:-0.25, base:0.5},
+  {demo:'rings',  no:'05', title:'Halka Dalgası',   sub:'Merkezden yayılan renk',    x: 4.3,  z:-0.8, ry:-0.6,  base:1.15},
+  {fx:'neg',     no:'06', title:'Kırmızı Negatif', sub:'Göz serisi · ters ton',     x:EYE_X-4.3,  z:-0.8, ry: 0.6,  base:1.2,  rate:0.82, off:0.13},
+  {fx:'thermal', no:'07', title:'Isı İzi',         sub:'Göz serisi · sahte renk',   x:EYE_X-2.15, z:-2.7, ry: 0.25, base:0.6,  rate:1.12, off:0.55},
+  {fx:'none',    no:'08', title:'Pozitif',         sub:'Göz serisi · efektsiz',     x:EYE_X,      z: 0.3, ry: 0,    base:-1,   rate:1.0,  off:0.0},
+  {fx:'kaleido', no:'09', title:'Dört Bakış',      sub:'Göz serisi · kaleydoskop',  x:EYE_X+2.15, z:-2.7, ry:-0.25, base:1.5,  rate:0.7,  off:0.31},
+  {fx:'glitch',  no:'10', title:'Sinyal Kaybı',    sub:'Göz serisi · bozuk yayın',  x:EYE_X+4.3,  z:-0.8, ry:-0.6,  base:0.9,  rate:1.25, off:0.77},
+];
+
+function plaque(d){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+  const x = c.getContext('2d'), tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const draw = () => {
+    x.fillStyle = '#15161a'; x.fillRect(0, 0, 512, 160);
+    x.fillStyle = '#ffb547'; x.font = '600 28px "IBM Plex Mono", monospace'; x.fillText('No. ' + d.no, 30, 48);
+    x.fillStyle = '#e9edf2'; x.font = '600 48px "Chakra Petch", sans-serif'; x.fillText(d.title, 30, 104);
+    x.fillStyle = '#8b96a3'; x.font = '26px "IBM Plex Sans", sans-serif'; x.fillText(d.sub, 30, 142);
+    tex.needsUpdate = true;
+  };
+  draw(); if (document.fonts) document.fonts.ready.then(draw);
+  return new THREE.Mesh(new THREE.PlaneGeometry(0.66, 0.206), new THREE.MeshStandardMaterial({map:tex, roughness:0.45, metalness:0.25}));
+}
+
+const avgC = document.createElement('canvas'); avgC.width = avgC.height = 8;
+const actx = avgC.getContext('2d', {willReadFrequently:true});
+const kalC = document.createElement('canvas'); kalC.width = kalC.height = 96; const kctx = kalC.getContext('2d');
+const eyeVideos = [];
+const NET_TILES = [[64,64],[0,64],[64,0],[128,64],[64,128]];
+
+const galCubes = GAL.map((d, i) => {
+  const chainC = document.createElement('canvas'); chainC.width = 320; chainC.height = 64;
+  const cx = chainC.getContext('2d');
+  const netG = document.createElement('canvas'); netG.width = netG.height = 192;
+  const nx = netG.getContext('2d', {willReadFrequently: !!d.fx && d.fx !== 'none' && d.fx !== 'kaleido'});
+  [cx, nx].forEach(c => { c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; });
+  const tex = new THREE.CanvasTexture(chainC);
+  tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace;
+
+  const root = new THREE.Group(); root.position.set(d.x, 0, d.z); root.rotation.y = d.ry; gallery.add(root);
+  const g = new THREE.Group(); root.add(g);
+  FACES.forEach((f, k) => {
+    const p00 = new V3(...f.p00), ax = new V3(...f.p10).sub(p00).normalize(), ay = new V3(...f.p01).sub(p00).normalize();
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2*H, 2*H), new THREE.ShaderMaterial({uniforms:{chain:{value:tex}, slot:{value:k}, bright:U.bright, bits:U.bits}, vertexShader:ledVS, fragmentShader:ledFS}));
+    m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(ax, ay, new V3().crossVectors(ax, ay)));
+    m.position.copy(p00).addScaledVector(ax, H).addScaledVector(ay, H); g.add(m);
+  });
+  const sh = (w, h, dd, x, y, z) => add(box(w, h, dd, GM.shell), x, y, z, g);
+  sh(2*E, 2*E, S, 0, 0, -E + S/2);
+  sh(S, 2*E, depth, -E + S/2, 0, (zf - E)/2); sh(S, 2*E, depth, E - S/2, 0, (zf - E)/2);
+  sh(2*E, S, depth, 0, E - S/2, (zf - E)/2); sh(2*E, S, depth, 0, -E + S/2, (zf - E)/2);
+  sh(2*E, bw, S, 0, (E + H)/2, zf + S/2); sh(2*E, bw, S, 0, -(E + H)/2, zf + S/2);
+  sh(bw, 2*H, S, -(E + H)/2, 0, zf + S/2); sh(bw, 2*H, S, (E + H)/2, 0, zf + S/2);
+
+  // içeriden taşan renkli ışık + müze spotu
+  const glow = new THREE.PointLight(0xffffff, 0, 6, 2); glow.position.set(0, 0, H + 0.5); g.add(glow);
+  const zc = (zf - E)/2;
+  let baseY;
+  if (d.base >= 0) {
+    baseY = GY + d.base + E;
+    const pw = 2*E + 0.24;
+    add(box(pw, d.base, pw, GM.plinth), 0, GY + d.base/2, zc, root);
+    const pq = plaque(d); pq.position.set(0, GY + d.base - 0.2, zc + pw/2 + 0.003); root.add(pq);
+  } else {
+    // askıdaki küp: tavana giden dört ince tel, önünde okuma kürsüsü
+    baseY = GY + 1.5 + E;
+    [-1, 1].forEach(sx => [-1, 1].forEach(sz => {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 14, 4), GM.wire);
+      w.position.set(sx*(E - 0.06), E + 7, zc + sz*(E - 0.12)); g.add(w);
+    }));
+    add(box(0.05, 0.9, 0.05, GM.plinth), 0, GY + 0.45, 2.05, root);
+    const pq = plaque(d); pq.position.set(0, GY + 0.95, 2.08); pq.rotation.x = -0.65; root.add(pq);
+  }
+  g.position.y = baseY;
+  const spot = new THREE.SpotLight(0xffe4c4, 38, 16, 0.26, 0.75, 2);
+  spot.position.set(0, GY + 9, 2.6); spot.target = g; root.add(spot);
+
+  let src, video = null;
+  if (d.demo) src = new Src(d.demo, i, 192);
+  else {
+    video = document.createElement('video');
+    video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
+    // gözler aynı anda kırpmasın: her küpte farklı başlangıç ve hız
+    video.addEventListener('loadedmetadata', () => { video.currentTime = (d.off*video.duration) % video.duration; video.playbackRate = d.rate; if (gallery.visible) video.play().catch(() => {}); });
+    video.src = EYE_URL;
+    eyeVideos.push(video);
+  }
+  const c = {d, g, root, cx, nx, netG, tex, glow, baseY, src, video, float: d.base < 0};
+  return c;
+});
+
+const THERM = (() => {
+  const st = [[0, 0,0,8], [0.22, 28,12,110], [0.42, 150,20,150], [0.62, 245,70,40], [0.82, 255,200,40], [1, 255,255,235]];
+  const a = new Uint8Array(256*3);
+  for (let i = 0; i < 256; i++) {
+    const v = i/255; let j = 0; while (j < st.length - 2 && v > st[j+1][0]) j++;
+    const s0 = st[j], s1 = st[j+1], f = (v - s0[0])/(s1[0] - s0[0]);
+    for (let ch = 0; ch < 3; ch++) a[i*3 + ch] = s0[ch+1] + (s1[ch+1] - s0[ch+1])*f;
+  }
+  return a;
+})();
+const glitchBuf = new Uint8ClampedArray(192*192*4);
+
+function drawEye(c, s, t){
+  const nx = c.nx, fx = c.d.fx;
+  if (fx === 'kaleido') {
+    // gözün dörtte biri dört kez aynalanır, bütün yavaşça döner
+    drawCover(kctx, s, 0, 0, 96, 96);
+    nx.fillStyle = '#000'; nx.fillRect(0, 0, 192, 192);
+    nx.save(); nx.translate(96, 96); nx.rotate(t*0.12);
+    [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx, sy]) => { nx.save(); nx.scale(sx, sy); nx.drawImage(kalC, 0, 0, 96, 96, 0, 0, 138, 138); nx.restore(); });
+    nx.restore();
+    return;
+  }
+  drawCover(nx, s, 0, 0, 192, 192);
+  if (fx === 'none') return;
+  const img = nx.getImageData(0, 0, 192, 192), p = img.data, n = p.length;
+  if (fx === 'neg') {
+    for (let i = 0; i < n; i += 4) {
+      let L = 1 - (0.3*p[i] + 0.59*p[i+1] + 0.11*p[i+2])/255;
+      L = Math.min(1, Math.max(0, (L - 0.5)*1.35 + 0.5));
+      p[i] = 255*Math.pow(L, 0.8); p[i+1] = p[i+2] = 70*L*L*L;
+    }
+  } else if (fx === 'thermal') {
+    for (let i = 0; i < n; i += 4) {
+      const L = Math.min(255, (0.3*p[i] + 0.59*p[i+1] + 0.11*p[i+2])*1.1)|0;
+      p[i] = THERM[L*3]; p[i+1] = THERM[L*3 + 1]; p[i+2] = THERM[L*3 + 2];
+    }
+  } else if (fx === 'glitch') {
+    glitchBuf.set(p);
+    const burst = Math.sin(t*1.3) + Math.sin(t*3.7 + 1) > 1.1, f = (t*24)|0;
+    for (let y = 0; y < 192; y++) {
+      const band = burst && ((y + f*7) % 41) < 7;
+      const off = band ? Math.round(Math.sin(y*0.9 + f)*14) : 0, sp = band ? 6 : 2, dim = (y & 1) ? 0.72 : 1;
+      for (let x = 0; x < 192; x++) {
+        const i = (y*192 + x)*4;
+        const xr = Math.min(191, Math.max(0, x + off + sp)), xg = Math.min(191, Math.max(0, x + off)), xb = Math.min(191, Math.max(0, x + off - sp));
+        p[i] = glitchBuf[(y*192 + xr)*4]*dim; p[i+1] = glitchBuf[(y*192 + xg)*4 + 1]*dim; p[i+2] = glitchBuf[(y*192 + xb)*4 + 2]*dim;
+      }
+    }
+  }
+  nx.putImageData(img, 0, 0);
+}
+
+function updateGallery(t, dt, now){
+  galCubes.forEach((c, i) => {
+    let s = null;
+    if (c.video) { const v = c.video; s = v.readyState >= 2 && v.videoWidth ? {img:v, w:v.videoWidth, h:v.videoHeight} : {wait:true}; }
+    else { c.src.step(now); s = c.src.get(t, dt); }
+    if (s && s.wait) {
+      // video yokken: sönük bir bekleme halkası ve yönerge
+      const x = c.nx; x.fillStyle = '#000'; x.fillRect(0, 0, 192, 192);
+      x.strokeStyle = `rgba(255,181,71,${0.35 + 0.25*Math.sin(t*1.6 + i)})`; x.lineWidth = 3;
+      x.beginPath(); x.arc(96, 96, 22 + 3*Math.sin(t*1.6 + i), 0, Math.PI*2); x.stroke();
+      x.fillStyle = 'rgba(255,181,71,0.55)'; x.font = 'bold 11px monospace'; x.textAlign = 'center';
+      x.fillText('GÖZ', 96, 72); x.fillText('VİDEOSU', 96, 130);
+      NET_TILES.forEach(([px, py], k) => c.cx.drawImage(c.netG, px, py, 64, 64, k*64, 0, 64, 64));
+      c.tex.needsUpdate = true;
+    } else if (s && s.w) {
+      if (c.video) drawEye(c, s, t); else drawCover(c.nx, s, 0, 0, 192, 192);
+      NET_TILES.forEach(([x, y], k) => c.cx.drawImage(c.netG, x, y, 64, 64, k*64, 0, 64, 64));
+      c.tex.needsUpdate = true;
+    }
+    if ((frame + i) % 6 === 0) {
+      actx.drawImage(c.netG, 0, 0, 8, 8);
+      const p = actx.getImageData(0, 0, 8, 8).data; let r = 0, g = 0, b = 0;
+      for (let j = 0; j < p.length; j += 4) { r += LIN[p[j]]; g += LIN[p[j+1]]; b += LIN[p[j+2]]; }
+      const br = U.bright.value/64; r *= br; g *= br; b *= br; const l = (r + g + b)/3;
+      if (l > 1e-4) c.glow.color.setRGB(r/l, g/l, b/l);
+      c.glow.intensity = Math.min(6, l*22);
+    }
+    if (c.float) {
+      c.g.position.y = c.baseY + Math.sin(t*0.6 + i)*0.07;
+      c.g.rotation.y = Math.sin(t*0.22 + i)*0.42;
+      c.g.rotation.z = Math.sin(t*0.37 + i)*0.03;
+    }
+  });
+}
+
+const mainParts = [...panels.map(p => p.g), shell, statusLed, elec, termBox, floor, spill];
+function setGallery(on){
+  if (gallery.visible === on) return;
+  gallery.visible = on;
+  mainParts.forEach(o => o.visible = !on);
+  scene.fog.near = on ? 14 : 9; scene.fog.far = on ? 34 : 24;
+  $('.ov-read').style.visibility = on ? 'hidden' : '';
+  eyeVideos.forEach(v => { if (on) v.play().catch(() => {}); else v.pause(); });
+}
+// göz salonuna bırakılan / seçilen video beş küpün hepsine gider
+let eyeObjUrl = null;
+function loadEyeFile(file){
+  if (!file || !file.type.startsWith('video/')) return;
+  if (eyeObjUrl) URL.revokeObjectURL(eyeObjUrl);
+  eyeObjUrl = URL.createObjectURL(file);
+  eyeVideos.forEach(v => { v.src = eyeObjUrl; v.load(); });
+}
+const eyeFile = document.createElement('input'); eyeFile.type = 'file'; eyeFile.accept = 'video/*'; eyeFile.hidden = true; document.body.appendChild(eyeFile);
+eyeFile.addEventListener('change', e => { loadEyeFile(e.target.files[0]); e.target.value = ''; });
 
 function compose(t, dt, now){
   if (state.mode === 'sep') {
@@ -1288,6 +1539,7 @@ $('#bloom').addEventListener('change', e => { bloom.enabled = e.target.checked; 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const pickList = [...panels.map(p => p.face), ...panels.flatMap(p => p.bodies), ...shell.children];
 function panelAt(cx, cy){
+  if (gallery.visible) return -1;
   const r = vp.getBoundingClientRect();
   ndc.set((cx - r.left)/r.width*2 - 1, -((cy - r.top)/r.height)*2 + 1);
   ray.setFromCamera(ndc, camera);
@@ -1299,6 +1551,7 @@ let dragDepth = 0;
 vp.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; $('#drop').hidden = false; });
 vp.addEventListener('dragover', e => {
   e.preventDefault();
+  if (gallery.visible) { $('#drop').textContent = 'Bırak, göz videosu beş küpte oynasın'; return; }
   if (state.mode !== 'sep') { $('#drop').textContent = 'Bırak, küpte oynasın'; return; }
   const i = panelAt(e.clientX, e.clientY); markRow(i);
   $('#drop').textContent = i >= 0 ? `${i+1} · ${FACES[i].name} paneline bırak` : 'Bir panelin üstüne getir';
@@ -1307,11 +1560,13 @@ vp.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; 
 vp.addEventListener('drop', e => {
   e.preventDefault(); dragDepth = 0; $('#drop').hidden = true; markRow(-1);
   const files = e.dataTransfer.files, i = panelAt(e.clientX, e.clientY);
+  if (gallery.visible) { loadEyeFile(files[0]); if (!$('#vEye').matches('[aria-pressed="true"]')) setView('eye'); return; }
   if (files.length > 1) handleFiles(files, Math.max(0, i));
   else if (state.mode === 'sep') { if (i >= 0) loadPanel(i, files[0]); }
   else handleFiles(files);
 });
 renderer.domElement.addEventListener('dblclick', e => {
+  if (gallery.visible) { eyeFile.click(); return; }
   const i = panelAt(e.clientX, e.clientY); if (i < 0) return;
   if (state.mode !== 'sep') setMode('sep');
   $('#pf' + i).click();
@@ -1333,11 +1588,14 @@ const VIEWS = {
   out:  {pos:[2.75,1.45,3.75], tgt:[0,-0.3,0],   fov:40, ex:0, min:1.6,  max:12,  polar:0.62},
   elec: {pos:[4.3,2.6,4.6],    tgt:[0,-0.55,-0.1],fov:40, ex:1, min:1.6,  max:14,  polar:0.62},
   in:   {pos:[0,0.02,0.32],    tgt:[0,0,0],       fov:80, ex:0, min:0.05, max:0.55,polar:1},
+  gal:  {pos:[0.3,1.7,12.6],   tgt:[0,-0.05,-1.2], fov:46, ex:0, min:2.5,  max:18,  polar:0.54},
+  eye:  {pos:[EYE_X+0.3,1.7,12.6], tgt:[EYE_X,-0.05,-1.2], fov:46, ex:0, min:2.5, max:18, polar:0.54},
 };
 let tween = null, exTarget = 0, ex = 0, lastEx = -1;
 function setView(name){
   const v = VIEWS[name]; exTarget = v.ex;
-  ['out','elec','in'].forEach(n => $('#v' + n[0].toUpperCase() + n.slice(1)).setAttribute('aria-pressed', String(n === name)));
+  ['out','elec','in','gal','eye'].forEach(n => $('#v' + n[0].toUpperCase() + n.slice(1)).setAttribute('aria-pressed', String(n === name)));
+  setGallery(name === 'gal' || name === 'eye');
   controls.minDistance = 0; controls.maxDistance = 100; controls.maxPolarAngle = Math.PI;
   tween = {t:0, dur: reduceMotion ? 0.001 : 1.1, p0:camera.position.clone(), t0:controls.target.clone(), f0:camera.fov, p1:new V3(...v.pos), t1:new V3(...v.tgt), f1:v.fov, v};
   if (reduceMotion) ex = exTarget;
@@ -1345,6 +1603,14 @@ function setView(name){
 $('#vOut').onclick = () => setView('out');
 $('#vElec').onclick = () => setView('elec');
 $('#vIn').onclick = () => setView('in');
+$('#vGal').onclick = () => setView('gal');
+$('#vEye').onclick = () => setView('eye');
+// ?gorunum=galeri | gozler | elektronik | iceriden ile doğrudan açılır
+{
+  const q = new URLSearchParams(location.search).get('gorunum');
+  const name = {galeri:'gal', gozler:'eye', elektronik:'elec', iceriden:'in'}[q];
+  if (name) setView(name);
+}
 
 new ResizeObserver(() => {
   const w = vp.clientWidth, h = vp.clientHeight;
@@ -1364,6 +1630,7 @@ function loop(){
   fps += ((1/Math.max(dt, 1e-3)) - fps)*0.05;
   const now = performance.now();
   compose(t, dt, now);
+  if (gallery.visible) updateGallery(t, dt, now);
   chainTex.needsUpdate = true;
   strip.drawImage(chain, 0, 0);
   if (frame % 4 === 0) measure();
@@ -1385,7 +1652,7 @@ function loop(){
     M.shell.opacity = 1 - ex*0.86; M.shell.depthWrite = M.shell.opacity > 0.98;
     rebuildCables(); lastEx = ex;
   }
-  const showCables = ex > 0.04;
+  const showCables = ex > 0.04 && !gallery.visible;
   [...dataTubes, ...powerTubes, hatPowerTube].forEach(m => m.visible = showCables);
   pulses.forEach((s, j) => {
     s.visible = showCables;
@@ -1403,7 +1670,7 @@ function loop(){
   controls.update();
 
   // etiketler
-  const w = vp.clientWidth, h = vp.clientHeight, lop = Math.max(0, Math.min(1, (ex - 0.55)/0.4));
+  const w = vp.clientWidth, h = vp.clientHeight, lop = gallery.visible ? 0 : Math.max(0, Math.min(1, (ex - 0.55)/0.4));
   labelEls.forEach(l => {
     if (lop <= 0) { l.el.style.opacity = 0; return; }
     tmp.copy(l.get()).project(camera);
