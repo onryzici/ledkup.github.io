@@ -1344,6 +1344,8 @@ function loadEyeFile(file){
 }
 const eyeFile = document.createElement('input'); eyeFile.type = 'file'; eyeFile.accept = 'video/*'; eyeFile.hidden = true; document.body.appendChild(eyeFile);
 eyeFile.addEventListener('change', e => { loadEyeFile(e.target.files[0]); e.target.value = ''; });
+// telefonda güç tasarrufu otomatik oynatmayı engellerse ilk dokunuşta başlat
+['pointerdown', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, () => { if (gallery.visible) eyeVideos.forEach(v => { if (v.paused) v.play().catch(() => {}); }); }, {passive:true}));
 
 function compose(t, dt, now){
   if (state.mode === 'sep') {
@@ -1605,7 +1607,8 @@ $('#vEye').onclick = () => setView('eye');
 // ?gorunum=galeri | gozler | elektronik | iceriden ile doğrudan açılır
 {
   const q = new URLSearchParams(location.search).get('gorunum');
-  const name = {galeri:'gal', gozler:'eye', elektronik:'elec', iceriden:'in'}[q];
+  // parametre yoksa doğrudan göz salonu açılır; mühendislik küpü için ?gorunum=distan
+  const name = q ? {galeri:'gal', gozler:'eye', elektronik:'elec', iceriden:'in', distan:'out'}[q] : 'eye';
   if (name) setView(name);
 }
 
