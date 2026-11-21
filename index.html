@@ -1133,7 +1133,6 @@ const panelSrc = FACES.map((f, i) => new Src(PANEL_DEFAULT[i], i, 64));
 /* ---------- galeri: iki salon, beşer küp ---------- */
 const GY = -E - PL;                 // zemin yüksekliği
 const EYE_X = 22;                   // göz salonunun merkezi
-const EYE_URL = 'goz.mp4';
 const gallery = new THREE.Group(); gallery.visible = false; scene.add(gallery);
 const GM = {
   shell: std(0x141518, {roughness:0.7, metalness:0.15}),
@@ -1151,11 +1150,11 @@ const GAL = [
   {demo:'tunnel', no:'03', title:'Sonsuz Koridor',  sub:'Askıda, yavaşça döner',     x: 0,    z: 0.3, ry: 0,    base:-1},
   {demo:'rain',   no:'04', title:'Dijital Yağmur',  sub:'Akan glifler',              x: 2.15, z:-2.7, ry:-0.25, base:0.5},
   {demo:'rings',  no:'05', title:'Halka Dalgası',   sub:'Merkezden yayılan renk',    x: 4.3,  z:-0.8, ry:-0.6,  base:1.15},
-  {fx:'neg',     no:'06', title:'Kırmızı Negatif', sub:'Göz serisi · ters ton',     x:EYE_X-4.3,  z:-0.8, ry: 0.6,  base:1.2,  rate:0.82, off:0.13},
-  {fx:'thermal', no:'07', title:'Isı İzi',         sub:'Göz serisi · sahte renk',   x:EYE_X-2.15, z:-2.7, ry: 0.25, base:0.6,  rate:1.12, off:0.55},
-  {fx:'none',    no:'08', title:'Pozitif',         sub:'Göz serisi · efektsiz',     x:EYE_X,      z: 0.3, ry: 0,    base:-1,   rate:1.0,  off:0.0},
-  {fx:'kaleido', no:'09', title:'Dört Bakış',      sub:'Göz serisi · kaleydoskop',  x:EYE_X+2.15, z:-2.7, ry:-0.25, base:1.5,  rate:0.7,  off:0.31},
-  {fx:'glitch',  no:'10', title:'Sinyal Kaybı',    sub:'Göz serisi · bozuk yayın',  x:EYE_X+4.3,  z:-0.8, ry:-0.6,  base:0.9,  rate:1.25, off:0.77},
+  {fx:'neg',     no:'06', title:'Kırmızı Negatif', sub:'Göz serisi · ters ton',     x:EYE_X-4.3,  z:-0.8, ry: 0.6,  base:1.2,  rate:0.82, off:0.13, url:'goz_b1.mp4'},
+  {fx:'thermal', no:'07', title:'Isı İzi',         sub:'Göz serisi · sahte renk',   x:EYE_X-2.15, z:-2.7, ry: 0.25, base:0.6,  rate:1.12, off:0.55, url:'goz_c.mp4'},
+  {fx:'none',    no:'08', title:'Pozitif',         sub:'Göz serisi · efektsiz',     x:EYE_X,      z: 0.3, ry: 0,    base:-1,   rate:1.0,  off:0.0,  url:'goz_a.mp4'},
+  {fx:'kaleido', no:'09', title:'Dört Bakış',      sub:'Göz serisi · kaleydoskop',  x:EYE_X+2.15, z:-2.7, ry:-0.25, base:1.5,  rate:0.7,  off:0.31, url:'goz_a.mp4'},
+  {fx:'glitch',  no:'10', title:'Sinyal Kaybı',    sub:'Göz serisi · bozuk yayın',  x:EYE_X+4.3,  z:-0.8, ry:-0.6,  base:0.9,  rate:1.25, off:0.77, url:'goz_b2.mp4'},
 ];
 
 function plaque(d){
@@ -1233,7 +1232,7 @@ const galCubes = GAL.map((d, i) => {
     video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
     // gözler aynı anda kırpmasın: her küpte farklı başlangıç ve hız
     video.addEventListener('loadedmetadata', () => { video.currentTime = (d.off*video.duration) % video.duration; video.playbackRate = d.rate; if (gallery.visible) video.play().catch(() => {}); });
-    video.src = EYE_URL;
+    video.src = d.url;
     eyeVideos.push(video);
   }
   const c = {d, g, root, cx, nx, netG, tex, glow, baseY, src, video, float: d.base < 0};
@@ -1258,8 +1257,8 @@ function drawEye(c, s, t){
     // gözün dörtte biri dört kez aynalanır, bütün yavaşça döner
     drawCover(kctx, s, 0, 0, 96, 96);
     nx.fillStyle = '#000'; nx.fillRect(0, 0, 192, 192);
-    nx.save(); nx.translate(96, 96); nx.rotate(t*0.12);
-    [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx, sy]) => { nx.save(); nx.scale(sx, sy); nx.drawImage(kalC, 0, 0, 96, 96, 0, 0, 138, 138); nx.restore(); });
+    nx.save(); nx.translate(96, 96); nx.rotate(Math.sin(t*0.2)*0.35);
+    [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx, sy]) => { nx.save(); nx.scale(sx, sy); nx.drawImage(kalC, 0, 0, 96, 96, 0, 0, 100, 100); nx.restore(); });
     nx.restore();
     return;
   }
@@ -1299,17 +1298,15 @@ function updateGallery(t, dt, now){
     if (c.video) { const v = c.video; s = v.readyState >= 2 && v.videoWidth ? {img:v, w:v.videoWidth, h:v.videoHeight} : {wait:true}; }
     else { c.src.step(now); s = c.src.get(t, dt); }
     if (s && s.wait) {
-      // video yokken: sönük bir bekleme halkası ve yönerge
-      const x = c.nx; x.fillStyle = '#000'; x.fillRect(0, 0, 192, 192);
-      x.strokeStyle = `rgba(255,181,71,${0.35 + 0.25*Math.sin(t*1.6 + i)})`; x.lineWidth = 3;
-      x.beginPath(); x.arc(96, 96, 22 + 3*Math.sin(t*1.6 + i), 0, Math.PI*2); x.stroke();
-      x.fillStyle = 'rgba(255,181,71,0.55)'; x.font = 'bold 11px monospace'; x.textAlign = 'center';
-      x.fillText('GÖZ', 96, 72); x.fillText('VİDEOSU', 96, 130);
-      NET_TILES.forEach(([px, py], k) => c.cx.drawImage(c.netG, px, py, 64, 64, k*64, 0, 64, 64));
+      // video yüklenene kadar kısa bir an siyah
+      c.nx.fillStyle = '#000'; c.nx.fillRect(0, 0, 192, 192);
+      c.cx.fillStyle = '#000'; c.cx.fillRect(0, 0, 320, 64);
       c.tex.needsUpdate = true;
     } else if (s && s.w) {
       if (c.video) drawEye(c, s, t); else drawCover(c.nx, s, 0, 0, 192, 192);
-      NET_TILES.forEach(([x, y], k) => c.cx.drawImage(c.netG, x, y, 64, 64, k*64, 0, 64, 64));
+      // göz küplerinde her yüzde tam bir göz (kolaj gibi), demolarda kesintisiz açılım
+      if (c.video) for (let k = 0; k < 5; k++) c.cx.drawImage(c.netG, 0, 0, 192, 192, k*64, 0, 64, 64);
+      else NET_TILES.forEach(([x, y], k) => c.cx.drawImage(c.netG, x, y, 64, 64, k*64, 0, 64, 64));
       c.tex.needsUpdate = true;
     }
     if ((frame + i) % 6 === 0) {
