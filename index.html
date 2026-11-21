@@ -1152,9 +1152,9 @@ const GAL = [
   {demo:'rings',  no:'05', title:'Halka Dalgası',   sub:'Merkezden yayılan renk',    x: 4.3,  z:-0.8, ry:-0.6,  base:1.15},
   {fx:'neg',     no:'06', title:'Kırmızı Negatif', sub:'Göz serisi · ters ton',     x:EYE_X-4.3,  z:-0.8, ry: 0.6,  base:1.2,  rate:0.82, off:0.13, url:'goz_b1.mp4'},
   {fx:'thermal', no:'07', title:'Isı İzi',         sub:'Göz serisi · sahte renk',   x:EYE_X-2.15, z:-2.7, ry: 0.25, base:0.6,  rate:1.12, off:0.55, url:'goz_c.mp4'},
-  {fx:'none',    no:'08', title:'Pozitif',         sub:'Göz serisi · efektsiz',     x:EYE_X,      z: 0.3, ry: 0,    base:-1,   rate:1.0,  off:0.0,  url:'goz_a.mp4'},
-  {fx:'kaleido', no:'09', title:'Dört Bakış',      sub:'Göz serisi · kaleydoskop',  x:EYE_X+2.15, z:-2.7, ry:-0.25, base:1.5,  rate:0.7,  off:0.31, url:'goz_a.mp4'},
-  {fx:'glitch',  no:'10', title:'Sinyal Kaybı',    sub:'Göz serisi · bozuk yayın',  x:EYE_X+4.3,  z:-0.8, ry:-0.6,  base:0.9,  rate:1.25, off:0.77, url:'goz_b2.mp4'},
+  {fx:'none',    no:'08', title:'Pozitif',         sub:'Göz kolajı · efektsiz',     x:EYE_X,      z: 0.3, ry: 0,    base:-1,   rate:1.0,  off:0.0,  url:'kolaj_pos.mp4', net:true},
+  {fx:'none',    no:'09', title:'Yeşil Negatif',   sub:'Göz kolajı · ters ton',     x:EYE_X+2.15, z:-2.7, ry:-0.25, base:1.5,  rate:1.0,  off:0.31, url:'kolaj_gneg.mp4', net:true},
+  {fx:'none',    no:'10', title:'Mavi Negatif',    sub:'Göz kolajı · ters ton',     x:EYE_X+4.3,  z:-0.8, ry:-0.6,  base:0.9,  rate:1.0,  off:0.77, url:'kolaj_bneg.mp4', net:true},
 ];
 
 function plaque(d){
@@ -1305,7 +1305,12 @@ function updateGallery(t, dt, now){
     } else if (s && s.w) {
       if (c.video) drawEye(c, s, t); else drawCover(c.nx, s, 0, 0, 192, 192);
       // göz küplerinde her yüzde tam bir göz (kolaj gibi), demolarda kesintisiz açılım
-      if (c.video) for (let k = 0; k < 5; k++) c.cx.drawImage(c.netG, 0, 0, 192, 192, k*64, 0, 64, 64);
+      if (c.video && !c.d.net) for (let k = 0; k < 5; k++) c.cx.drawImage(c.netG, 0, 0, 192, 192, k*64, 0, 64, 64);
+      else if (c.video) {
+        // kolaj küpleri: her yüze kolajın farklı bir yarım penceresi, yüz başına 4–6 göz
+        const vw = s.w, vh = s.h, q = Math.min(vw, vh)/2;
+        [[q/2, q/2], [0, 0], [vw - q, 0], [0, vh - q], [vw - q, vh - q]].forEach(([ox, oy], k) => c.cx.drawImage(s.img, ox, oy, q, q, k*64, 0, 64, 64));
+      }
       else NET_TILES.forEach(([x, y], k) => c.cx.drawImage(c.netG, x, y, 64, 64, k*64, 0, 64, 64));
       c.tex.needsUpdate = true;
     }
